@@ -59,6 +59,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.totalEnrolments !== undefined && data.stateCounts !== undefined) {
                 console.log("Loading uploaded summary data");
                 updateDashboardViews(data);
+                showDataTypeBadges(data);
+                applyConditionalVisibility(data);
                 // Clear after loading to ensure fresh data on next upload
                 // localStorage.removeItem('processedData');
                 // localStorage.removeItem('processedFile');
@@ -95,6 +97,8 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 console.log("Loaded dashboard_data.json from server");
                 updateDashboardViews(data);
+                showDataTypeBadges(data);
+                applyConditionalVisibility(data);
             })
             .catch(err => {
                 console.log("No data available. Dashboard showing empty state.");
@@ -341,6 +345,100 @@ document.addEventListener('DOMContentLoaded', function () {
 
             rows[1].querySelector('.g-bar-fill').style.width = `${fp}%`;
             rows[1].querySelector('.g-val').textContent = `${fp}%`;
+        }
+    }
+
+    function showDataTypeBadges(stats) {
+        // Add badges showing which data types were loaded
+        const headerText = document.querySelector('.header-text');
+        
+        // Remove existing badges
+        const existingBadges = document.getElementById('dataTypeBadges');
+        if (existingBadges) existingBadges.remove();
+        
+        if (stats.data_types && stats.data_types.length > 0) {
+            const badgeContainer = document.createElement('div');
+            badgeContainer.id = 'dataTypeBadges';
+            badgeContainer.style.display = 'flex';
+            badgeContainer.style.gap = '8px';
+            badgeContainer.style.marginTop = '8px';
+            
+            const badgeColors = {
+                'biometric': '#a855f7',
+                'demographic': '#4f46e5',
+                'enrolment': '#10b981'
+            };
+            
+            const badgeLabels = {
+                'biometric': 'Biometric Data',
+                'demographic': 'Demographic Data',
+                'enrolment': 'Enrolment Data'
+            };
+            
+            stats.data_types.forEach(type => {
+                const badge = document.createElement('span');
+                badge.style.cssText = `
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 4px 12px;
+                    background: ${badgeColors[type]}15;
+                    color: ${badgeColors[type]};
+                    border-radius: 6px;
+                    font-size: 12px;
+                    font-weight: 600;
+                `;
+                badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${badgeLabels[type]}`;
+                badgeContainer.appendChild(badge);
+            });
+            
+            headerText.appendChild(badgeContainer);
+        }
+    }
+
+    function applyConditionalVisibility(stats) {
+        // Hide Enrolment card if no enrolment data
+        const enrolmentCard = document.querySelector('.kpi-card:nth-child(1)');
+        if (stats.totalEnrolments === 0) {
+            enrolmentCard.style.display = 'none';
+        } else {
+            enrolmentCard.style.display = 'flex';
+        }
+        
+        // Hide Gender Split card if no gender data
+        const genderCards = document.querySelectorAll('.glass-panel');
+        genderCards.forEach(card => {
+            const title = card.querySelector('.card-title h3');
+            if (title && title.textContent.includes('Gender Split')) {
+                if (!stats.hasGenderData || 
+                    (stats.genderCounts.Male === 0 && stats.genderCounts.Female === 0 && stats.genderCounts.Other === 0)) {
+                    card.style.display = 'none';
+                } else {
+                    card.style.display = 'block';
+                }
+            }
+        });
+        
+        // Hide insight sections if no data
+        const districtScoresSection = document.getElementById('districtScores')?.parentElement;
+        if (districtScoresSection && (!stats.district_scores || Object.keys(stats.district_scores).length === 0)) {
+            districtScoresSection.style.display = 'none';
+        } else if(districtScoresSection) {
+            districtScoresSection.style.display = 'block';
+        }
+        
+        const keyFindingsSection = document.getElementById('keyFindings')?.parentElement;
+        if (keyFindingsSection && (!stats.insights || !stats.insights.key_findings || stats.insights.key_findings.length === 0)) {
+            keyFindingsSection.style.display = 'none';
+        } else if(keyFindingsSection) {
+            keyFindingsSection.style.display = 'block';
+        }
+        
+        const recommendationsSection = document.getElementById('recommendations')?.parentElement;
+        if (recommendationsSection && (!stats.insights || !stats.insights.recommendations || stats.insights.recommendations.length === 0)) {
+            recommendationsSection.style.display = 'none';
+        } else if(recommendationsSection) {
+            recommendationsSection.style.display = 'block';
         }
     }
 

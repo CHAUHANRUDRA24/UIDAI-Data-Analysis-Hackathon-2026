@@ -13,15 +13,24 @@ class UIDAIProcessor:
                 "status": "PASS",
                 "issues": []
             },
+            "data_types": [],  # Track which data types were processed
             "totalEnrolments": 0,
             "totalUpdates": 0,
             "biometricUpdates": 0,
             "demographicUpdates": 0,
             "genderCounts": {"Male": 0, "Female": 0, "Other": 0},
+            "hasGenderData": False,  # Track if gender column exists
             "ageCounts": {"0-5": 0, "5-18": 0, "18-45": 0, "45-60": 0, "60+": 0},
             "stateCounts": {},
             "districtCounts": {},
             "district_scores": {},
+            "analytics": {  # NEW: Additional useful analytics
+                "avgDailyEnrolments": 0,
+                "biometricAdoptionRate": 0,
+                "dataCompleteness": 0,
+                "peakActivity": "",
+                "totalRecordsProcessed": 0
+            },
             "trends": {
                 "weekly": {},
                 "growth_rate": {},
@@ -111,10 +120,16 @@ class UIDAIProcessor:
             df = self.normalize_location(df)
             
             if file_type == 'biometric':
+                if file_type not in self.summary['data_types']:
+                    self.summary['data_types'].append('biometric')
                 self._process_biometric(df)
             elif file_type == 'demographic':
+                if file_type not in self.summary['data_types']:
+                    self.summary['data_types'].append('demographic')
                 self._process_demographic(df)
             elif file_type == 'enrolment':
+                if file_type not in self.summary['data_types']:
+                    self.summary['data_types'].append('enrolment')
                 self._process_enrolment(df)
             else:
                 self._add_validation_issue(f"Unknown file format: {os.path.basename(file_path)}", "WARNING")
@@ -143,6 +158,9 @@ class UIDAIProcessor:
         self.summary['ageCounts']['5-18'] += int(c1)
         self.summary['ageCounts']['18-45'] += int(c2)
         
+        # Extract gender if column exists
+        self._extract_gender(df, c1 + c2)
+        
         df['total_bio'] = df['bio_age_5_17'] + df['bio_age_17_']
         self._update_state_counts(df, 'total_bio')
         self._update_district_data(df, 'biometric', 'total_bio')
@@ -156,6 +174,9 @@ class UIDAIProcessor:
         self.summary['demographicUpdates'] += int(total)
         self.summary['ageCounts']['5-18'] += int(c1)
         self.summary['ageCounts']['18-45'] += int(c2)
+        
+        # Extract gender if column exists
+        self._extract_gender(df, c1 + c2)
         
         df['total_demo'] = df['demo_age_5_17'] + df['demo_age_17_']
         self._update_state_counts(df, 'total_demo')
@@ -171,10 +192,36 @@ class UIDAIProcessor:
         self.summary['ageCounts']['5-18'] += int(c2)
         self.summary['ageCounts']['18-45'] += int(c3)
         
+        # Extract gender if column exists
+        self._extract_gender(df, total)
+        
         df['total_enrol'] = df['age_0_5'] + df['age_5_17'] + df['age_18_greater']
         self._update_state_counts(df, 'total_enrol')
         self._update_district_data(df, 'enrolment', 'total_enrol')
 
+    def _extract_gender(self, df, total_count):
+        """Extract gender data if gender column exists"""
+        # Check for gender column (case-insensitive)
+        gender_col = None
+        for col in df.columns:
+            if col.lower() in ['gender', 'sex']:
+                gender_col = col
+                break
+        
+        if gender_col:
+            self.summary['hasGenderData'] = True
+            gender_map = {
+                'm': 'Male', 'male': 'Male', '1': 'Male',
+                'f': 'Female', 'female': 'Female', '2': 'Female',
+                'o': 'Other', 'other': 'Other', 'transgender': 'Other', '3': 'Other'
+            }
+            
+            for val in df[gender_col]:
+                val_str = str(val).lower().strip()
+                gender = gender_map.get(val_str, 'Other')
+                count = 1  # Assuming each row is one person
+                self.summary['genderCounts'][gender] += count
+    
     def _update_state_counts(self, df, count_col):
         if 'state' in df.columns:
             sums = df.groupby('state')[count_col].sum()
@@ -246,10 +293,37 @@ class UIDAIProcessor:
             if data['enrolment'] > 0 and data['biometric'] == 0:
                  self.summary['insights']['recommendations'].append(
                     f"District {district} shows zero biometric activity despite valid enrolments. Verify device connectivity."
-                )
+                 )
+                 break
+    
+    def calculate_additional_analytics(self):
+        """Calculate additional useful analytics"""
+        # Average daily enrolments (assuming 30-day period)
+        if self.summary['totalEnrolments'] > 0:
+            self.summary['analytics']['avgDailyEnrolments'] = round(self.summary['totalEnrolments'] / 30)
+        
+        # Biometric adoption rate
+        total_auth = self.summary['biometricUpdates'] + self.summary['demographicUpdates']
+        if total_auth > 0:
+            self.summary['analytics']['biometricAdoptionRate'] = round((self.summary['biometricUpdates'] / total_auth) * 100, 1)
+        
+        # Data completeness (percentage of districts with data)
+        if self.district_data:
+            self.summary['analytics']['totalRecordsProcessed'] = len(self.district_data)
+        
+        # Peak activity (top state)
+        if self.summary['stateCounts']:
+            peak_state = max(self.summary['stateCounts'], key=self.summary['stateCounts'].get)
+            self.summary['analytics']['peakActivity'] = peak_state
+        
+        # Data completeness percentage (simplified - based on having all 3 data types)
+        expected_types = 3  # biometric, demographic, enrolment
+        actual_types = len(self.summary['data_types'])
+        self.summary['analytics']['dataCompleteness'] = round((actual_types / expected_types) * 100, 1)
 
     def save_output(self, output_path='dashboard_data.json'):
         self.calculate_readiness_scores()
+        self.calculate_additional_analytics()  # NEW: Calculate additional analytics
         self.generate_insights()
         
         with open(output_path, 'w') as f:

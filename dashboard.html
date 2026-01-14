@@ -61,6 +61,10 @@
                         <p data-i18n="real_time_insights">Real-time insights from uploaded dataset</p>
                     </div>
                     <div style="display: flex; gap: 12px;">
+                        <a href="index.html" class="btn-secondary-small" style="gap: 8px; text-decoration: none;">
+                            <i class="fa-solid fa-upload"></i>
+                            <span>Upload New Data</span>
+                        </a>
                         <button id="langToggleBtn" class="btn-secondary-small" style="gap: 8px;">
                             <i class="fa-solid fa-language"></i>
                             <span id="langText">हिंदी</span>
@@ -102,7 +106,7 @@
                         </div>
                         <div class="kpi-value-group">
                             <h2 class="value">0</h2>
-                            <p class="label">Total Enrolments</p>
+                            <p class="label" data-i18n="total_enrolments">Total Enrolments</p>
                         </div>
                         <div class="insight-badge success" style="display: none;">
                             <i class="fa-solid fa-check"></i>
@@ -123,7 +127,7 @@
                         </div>
                         <div class="kpi-value-group">
                             <h2 class="value">0</h2>
-                            <p class="label">Total Updates</p>
+                            <p class="label" data-i18n="total_updates">Total Updates</p>
                         </div>
                         <div class="insight-badge warning" style="display: none;">
                             <i class="fa-solid fa-triangle-exclamation"></i>
@@ -134,8 +138,8 @@
                     <!-- KPI Card 3: Updates Breakdown (Chart) -->
                     <div class="kpi-card glass-panel wide-card">
                         <div class="card-title">
-                            <h3>Update Composition</h3>
-                            <p>Demographic vs Biometric</p>
+                            <h3 data-i18n="update_composition">Update Composition</h3>
+                            <p data-i18n="demographic_vs_biometric">Demographic vs Biometric</p>
                         </div>
                         <div class="chart-container-row">
                             <div class="chart-wrapper">
@@ -146,14 +150,14 @@
                                     <span class="dot purple"></span>
                                     <div>
                                         <span class="l-val">0%</span>
-                                        <span class="l-lbl">Biometric</span>
+                                        <span class="l-lbl" data-i18n="biometric">Biometric</span>
                                     </div>
                                 </div>
                                 <div class="legend-item">
                                     <span class="dot blue"></span>
                                     <div>
                                         <span class="l-val">0%</span>
-                                        <span class="l-lbl">Demographic</span>
+                                        <span class="l-lbl" data-i18n="demographic">Demographic</span>
                                     </div>
                                 </div>
                                 <div class="insight-text" style="display: none;">
@@ -167,8 +171,8 @@
                     <!-- KPI Card 4: Top Regions Activity -->
                     <div class="kpi-card glass-panel tall-card">
                         <div class="card-title">
-                            <h3>Regional Hotspots</h3>
-                            <button id="viewAllStatesBtn" class="btn-text">View All</button>
+                            <h3 data-i18n="regional_hotspots">Regional Hotspots</h3>
+                            <button id="viewAllStatesBtn" class="btn-text" data-i18n="view_all">View All</button>
                         </div>
                         <div class="region-list">
                             <!-- Populated dynamically from uploaded data -->
@@ -189,32 +193,11 @@
                 <!-- Dashboard Grid Row 2 -->
                 <div class="dashboard-grid" style="margin-top: 24px;">
 
-                    <!-- KPI Card 5: Total Authentications -->
-                    <div class="kpi-card glass-panel clickable-card" data-modal="authModal">
-                        <div class="kpi-header">
-                            <div class="icon-box green">
-                                <i class="fa-solid fa-fingerprint"></i>
-                            </div>
-                            <div class="trend up">
-                                <i class="fa-solid fa-arrow-trend-up"></i>
-                                <span>8.4%</span>
-                            </div>
-                        </div>
-                        <div class="kpi-value-group">
-                            <h2 class="value">45.2M</h2>
-                            <p class="label">Total Authentications</p>
-                        </div>
-                        <div class="insight-badge success">
-                            <i class="fa-solid fa-shield-halved"></i>
-                            <span>High Success Rate</span>
-                        </div>
-                    </div>
-
                     <!-- Chart Card: Age Distribution -->
                     <div class="glass-panel" style="grid-column: span 2;">
                         <div class="card-title">
-                            <h3>Enrolment by Age Group</h3>
-                            <span class="tag">Demographics</span>
+                            <h3 data-i18n="enrolment_by_age">Enrolment by Age Group</h3>
+                            <span class="tag" data-i18n="demographics">Demographics</span>
                         </div>
                         <div style="height: 200px; width: 100%;">
                             <canvas id="ageChart"></canvas>
@@ -224,12 +207,12 @@
                     <!-- Gender Distribution Stats -->
                     <div class="glass-panel">
                         <div class="card-title">
-                            <h3>Gender Split</h3>
+                            <h3 data-i18n="gender_split">Gender Split</h3>
                         </div>
                         <div class="gender-stats">
                             <div class="gender-row">
                                 <div class="g-info">
-                                    <span class="g-label">Male</span>
+                                    <span class="g-label" data-i18n="male">Male</span>
                                     <div class="g-bar-bg">
                                         <div class="g-bar-fill" style="width: 0%; background: #6366f1;"></div>
                                     </div>
@@ -238,7 +221,7 @@
                             </div>
                             <div class="gender-row" style="margin-top: 15px;">
                                 <div class="g-info">
-                                    <span class="g-label">Female</span>
+                                    <span class="g-label" data-i18n="female">Female</span>
                                     <div class="g-bar-bg">
                                         <div class="g-bar-fill" style="width: 0%; background: #ec4899;"></div>
                                     </div>
@@ -247,7 +230,7 @@
                             </div>
                             <div class="gender-row" style="margin-top: 15px;">
                                 <div class="g-info">
-                                    <span class="g-label">Other</span>
+                                    <span class="g-label" data-i18n="other">Other</span>
                                     <div class="g-bar-bg">
                                         <div class="g-bar-fill" style="width: 0%; background: #a855f7;"></div>
                                     </div>
