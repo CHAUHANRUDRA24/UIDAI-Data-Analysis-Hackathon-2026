@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UIDAI Analytics | Secure Upload</title>
+    <meta name="description" content="Securely upload UIDAI datasets for advanced analytics and insights.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="background-mesh"></div>
+
+    <main class="app-container">
+        <!-- Upload Card -->
+        <div class="card upload-card" id="uploadCard">
+            <div class="card-header">
+                <div class="icon-badge">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <h1>Upload Dataset</h1>
+                <p>Upload your UIDAI CSV or ZIP file to generate comprehensive insights.</p>
+            </div>
+
+            <div class="drop-zone" id="dropZone">
+                <input type="file" id="fileInput" accept=".csv, .zip" hidden>
+                <div class="drop-content">
+                    <div class="upload-illustration">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <i class="fa-solid fa-file-zipper"></i>
+                    </div>
+                    <h3>Drag & drop your file here</h3>
+                    <p class="secondary-text">or <span class="browse-link">click to browse</span></p>
+                    <p class="meta-text">Supports CSV & ZIP up to 50MB</p>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="uploadBtn" disabled>
+                <span>Upload & Analyze</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+            <div class="security-note">
+                <i class="fa-solid fa-lock"></i>
+                <span>Files are processed securely and end-to-end encrypted.</span>
+            </div>
+        </div>
+
+        <!-- Analysis Preview Card (Initially Hidden) -->
+        <div class="card analysis-card hidden" id="analysisCard">
+            <div class="card-header centered">
+                <div class="spinner-container">
+                    <svg class="spinner" viewBox="0 0 50 50">
+                        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                    </svg>
+                    <div class="file-icon-floating">
+                        <i class="fa-solid fa-file-lines"></i>
+                    </div>
+                </div>
+                <h2 id="processStatus">Analyzing Document...</h2>
+                <p id="fileName" class="filename">data_export_2026.csv</p>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-info">
+                    <span class="step-text" id="stepText">Validating structure...</span>
+                    <span class="percentage" id="percentage">0%</span>
+                </div>
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+            </div>
+
+            <div class="analysis-steps">
+                <div class="step-item active">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <span>File Upload</span>
+                </div>
+                <div class="step-item pending" id="stepStructure">
+                    <i class="fa-solid fa-circle"></i>
+                    <span>Structure Check</span>
+                </div>
+                <div class="step-item pending" id="stepInsights">
+                    <i class="fa-solid fa-circle"></i>
+                    <span>Generating Insights</span>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" id="cancelBtn">Cancel Upload</button>
+        </div>
+    </main>
+
+    <script src="script.js?v=2"></script>
+</body>
+
+</html>

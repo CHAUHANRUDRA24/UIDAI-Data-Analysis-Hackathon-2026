@@ -1,0 +1,579 @@
+/* Dashboard CSS - extending existing variables */
+@import 'styles.css';
+
+:root {
+    --card-bg: rgba(255, 255, 255, 0.7);
+    --card-border: rgba(255, 255, 255, 1);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    --sidebar-width: 260px;
+    --header-height: 80px;
+}
+
+body {
+    background-color: #f1f5f9;
+    /* Slightly darker than main bg for contrast */
+}
+
+/* Base Layout */
+.dashboard-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+/* Sidebar */
+.sidebar {
+    width: var(--sidebar-width);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-right: 1px solid rgba(255, 255, 255, 0.5);
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    position: relative;
+    z-index: 10;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 40px;
+}
+
+.logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--primary);
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--primary);
+}
+
+.nav-item.active {
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), #818cf8);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.user-info p {
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+.user-info .name {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.user-info .role {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    position: relative;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+}
+
+.header-text h1 {
+    font-size: 28px;
+    margin-bottom: 4px;
+}
+
+.header-text p {
+    color: var(--text-muted);
+}
+
+.controls {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.date-filter {
+    background: white;
+    padding: 10px 20px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    border: 1px solid var(--border);
+}
+
+.btn-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    font-size: 18px;
+    color: var(--text-muted);
+    box-shadow: var(--shadow-sm);
+}
+
+.badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: var(--error);
+    color: white;
+    font-size: 10px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: auto auto;
+    /* Two main rows concept */
+    gap: 24px;
+}
+
+.glass-panel {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-xl);
+    padding: 24px;
+    box-shadow: var(--glass-shadow);
+    transition: transform 0.2s;
+}
+
+.glass-panel:hover {
+    transform: translateY(-2px);
+}
+
+/* KPIs */
+.kpi-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.icon-box.blue {
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--primary);
+}
+
+.icon-box.purple {
+    background: rgba(168, 85, 247, 0.1);
+    color: #a855f7;
+}
+
+.icon-box.green {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.trend {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 20px;
+}
+
+.trend.up {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.trend.down {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+}
+
+.kpi-value-group {
+    margin-bottom: 20px;
+}
+
+.value {
+    font-size: 36px;
+    font-weight: 700;
+    font-family: var(--font-heading);
+    color: var(--text-main);
+    line-height: 1.1;
+}
+
+.label {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.insight-badge {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+.insight-badge.success {
+    background: #ecfdf5;
+    color: var(--success);
+}
+
+.insight-badge.warning {
+    background: #fffbeb;
+    color: #f59e0b;
+}
+
+/* Wide Card (Chart) */
+.wide-card {
+    grid-column: span 1;
+    /* Actually fits nicely as 3rd col if others take 1 each. Wait, design needs row 1 to be 4 items? Or 2-2? Prompt image implies 4 cards across or mixed. Let's do spans. */
+    grid-column: span 1;
+}
+
+/* Just stick to 1fr for all columns for alignment, but maybe chart needs more space. 
+   Let's make row 1: Card, Card, Card(Chart), Card(List).
+   Actually, chart is better visually if slightly wider.
+   Maybe layout: [Card] [Card] [Chart -- 2 cols -- ] [List] ? 
+   For 4 cols: [Card] [Card] [Chart] [List].
+   The chart might be cramped.
+   Let's adjust grid to be: repeat(3, 1fr) and put list on right? 
+   No, prompted "Top Layer" usually means 4 equal items or 3. 
+   I used a 4-col grid. Let Cards be 1 col each. 
+   Chart Card -> col 3.
+   List Card -> col 4.
+*/
+
+/* Adjusting layout for better visual as per 'No scrolling' */
+/* .wide-card styles handled by grid or utility classes */
+
+.card-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.card-title h3 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.card-title .tag {
+    font-size: 11px;
+    background: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.chart-container-row {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 140px;
+    width: 100%;
+}
+
+.chart-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    justify-content: space-between;
+}
+
+.legend-item div {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.dot.purple {
+    background: #a855f7;
+}
+
+.dot.blue {
+    background: #4f46e5;
+}
+
+.l-val {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.l-lbl {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.insight-text {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    display: flex;
+    gap: 5px;
+    line-height: 1.3;
+}
+
+/* List Card */
+.tall-card {
+    grid-row: span 1;
+}
+
+.region-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.region-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.region-item:last-child {
+    border: none;
+    padding-bottom: 0;
+}
+
+.rank {
+    width: 24px;
+    height: 24px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.region-info {
+    flex: 1;
+}
+
+.region-info h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.bar-bg {
+    height: 4px;
+    width: 100%;
+    background: #f1f5f9;
+    border-radius: 2px;
+}
+
+.bar-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+.region-stats {
+    text-align: right;
+}
+
+.r-val {
+    display: block;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.r-trend {
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+}
+
+.r-trend.up {
+    color: var(--success);
+}
+
+.r-trend.down {
+    color: var(--error);
+}
+
+.anomaly-alert {
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    color: #b91c1c;
+    align-items: start;
+}
+
+/* Gender Stats */
+.gender-stats {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.gender-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.g-info {
+    flex: 1;
+    margin-right: 12px;
+}
+
+.g-label {
+    font-size: 13px;
+    color: var(--text-main);
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.g-bar-bg {
+    height: 6px;
+    width: 100%;
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.g-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+}
+
+.g-val {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-main);
+}
