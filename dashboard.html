@@ -60,6 +60,9 @@
                         <h1>Executive Overview</h1>
                         <p>Real-time insights from uploaded dataset</p>
                     </div>
+                    <button id="viewFileBtn" class="btn-primary-small" style="gap: 8px;">
+                        <i class="fa-solid fa-file-csv"></i> View Source File
+                    </button>
                 </header>
 
                 <!-- Dashboard Grid -->
@@ -371,7 +374,25 @@
         </div>
     </div>
 
-    <script src="dashboard.js?v=1.1"></script>
+    <!-- File Viewer Modal -->
+    <div id="fileModal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" style="max-width: 900px; height: 80vh;">
+            <div class="modal-header">
+                <h3>Source Data (First 2000 rows)</h3>
+                <button id="closeFileModalBtn" class="btn-icon-small"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div style="overflow-x: auto;">
+                    <table class="states-table" id="fileDataTable">
+                        <thead id="fileTableHead"></thead>
+                        <tbody id="fileTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js?v=1.2"></script>
 </body>
 
 </html>

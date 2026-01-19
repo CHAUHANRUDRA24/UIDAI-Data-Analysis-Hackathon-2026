@@ -305,6 +305,58 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         console.error("View All States elements NOT found:", { viewAllBtn, modal, closeBtn });
     }
+
+    // File Viewer Modal Logic
+    const viewFileBtn = document.getElementById('viewFileBtn');
+    const fileModal = document.getElementById('fileModal');
+    const closeFileBtn = document.getElementById('closeFileModalBtn');
+    const fileTableHead = document.getElementById('fileTableHead');
+    const fileTableBody = document.getElementById('fileTableBody');
+
+    if (viewFileBtn && fileModal && closeFileBtn) {
+        viewFileBtn.addEventListener('click', () => {
+            const storedDataJSON = localStorage.getItem('processedData');
+
+            if (!storedDataJSON) {
+                alert("No data found to display.");
+                return;
+            }
+
+            try {
+                const data = JSON.parse(storedDataJSON);
+                if (data.length > 0) {
+                    // Populate Headers
+                    const headers = Object.keys(data[0]);
+                    fileTableHead.innerHTML = `<tr>${headers.map(h => `<th>${h.toUpperCase()}</th>`).join('')}</tr>`;
+
+                    // Populate Body
+                    fileTableBody.innerHTML = data.map(row => `
+                        <tr>${headers.map(h => `<td>${row[h] || ''}</td>`).join('')}</tr>
+                    `).join('');
+                }
+
+                fileModal.classList.remove('hidden');
+                setTimeout(() => fileModal.classList.add('show'), 10);
+
+            } catch (e) {
+                console.error("Error parsing data for table view", e);
+                alert("Error displaying data.");
+            }
+        });
+
+        const closeFileModal = () => {
+            fileModal.classList.remove('show');
+            setTimeout(() => fileModal.classList.add('hidden'), 300);
+        };
+
+        closeFileBtn.addEventListener('click', closeFileModal);
+
+        fileModal.addEventListener('click', (e) => {
+            if (e.target === fileModal) {
+                closeFileModal();
+            }
+        });
+    }
 });
 
 function initUpdatesChart() {
