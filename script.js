@@ -135,7 +135,7 @@ function simulateProgress(file) {
             stepInsights.classList.remove('active');
             stepInsights.classList.add('completed');
 
-            // Check if file is ZIP or CSV or PDF
+            // Check if file is ZIP or CSV
             const fileExt = file.name.split('.').pop().toLowerCase();
 
             if (fileExt === 'zip') {
@@ -150,9 +150,22 @@ function simulateProgress(file) {
     }, 150);
 }
 
+// Async CSV Processor to prevent UI freeze on large files (1M+ rows)
+function handleCSVFile(file) {
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+        let stats = initStats();
+        // Show indeterminate progress during processing
+        document.getElementById('stepText').textContent = "Processing " + formatBytes(file.size) + " of data...";
+
+        await processContentChunked(e.target.result, stats);
+        finishProcessing(stats, file.name);
+    };
+    reader.readAsText(file);
+}
+
 async function handleZipFile(file) {
     try {
-        // Load JSZip dynamically if not already loaded
         if (typeof JSZip === 'undefined') {
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
@@ -173,77 +186,14 @@ async function handleZipFile(file) {
             return;
         }
 
-        // Process and aggregate stats instead of storing all rows
-        let stats = {
-            totalEnrolments: 0,
-            totalUpdates: 0,
-            biometricUpdates: 0,
-            demographicUpdates: 0,
-            genderCounts: { Male: 0, Female: 0, Other: 0 },
-            ageCounts: { '0-5': 0, '5-18': 0, '18-45': 0, '45-60': 0, '60+': 0 },
-            stateCounts: {}
-        };
+        let stats = initStats();
 
         for (const filename of csvFiles) {
             const csvText = await contents.files[filename].async('text');
-            const rows = csvText.split('\n').map(row => row.split(','));
-            const headers = rows[0].map(h => h.trim().toLowerCase());
-
-            const hasBio = headers.some(h => h.includes('bio_age'));
-            const hasDemo = headers.some(h => h.includes('demo_age'));
-            const hasEnrol = headers.some(h => h.includes('age_0_5') || h.includes('age_5_17'));
-
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                if (row.length <= 1) continue;
-
-                let rowData = {};
-                headers.forEach((h, idx) => {
-                    rowData[h] = row[idx]?.trim();
-                });
-
-                let count = 0;
-
-                if (hasBio) {
-                    const bio517 = parseInt(rowData['bio_age_5_17']) || 0;
-                    const bio17 = parseInt(rowData['bio_age_17_']) || 0;
-                    count = bio517 + bio17;
-                    stats.totalUpdates += count;
-                    stats.biometricUpdates += count;
-                    stats.ageCounts['5-18'] += bio517;
-                    stats.ageCounts['18-45'] += bio17;
-                } else if (hasDemo) {
-                    const demo517 = parseInt(rowData['demo_age_5_17']) || 0;
-                    const demo17 = parseInt(rowData['demo_age_17_']) || 0;
-                    count = demo517 + demo17;
-                    stats.totalUpdates += count;
-                    stats.demographicUpdates += count;
-                    stats.ageCounts['5-18'] += demo517;
-                    stats.ageCounts['18-45'] += demo17;
-                } else if (hasEnrol) {
-                    const age05 = parseInt(rowData['age_0_5']) || 0;
-                    const age517 = parseInt(rowData['age_5_17']) || 0;
-                    const age18 = parseInt(rowData['age_18_greater']) || 0;
-                    count = age05 + age517 + age18;
-                    stats.totalEnrolments += count;
-                    stats.ageCounts['0-5'] += age05;
-                    stats.ageCounts['5-18'] += age517;
-                    stats.ageCounts['18-45'] += age18;
-                }
-
-                const state = rowData['state'];
-                if (state && count > 0) {
-                    stats.stateCounts[state] = (stats.stateCounts[state] || 0) + count;
-                }
-            }
+            await processContentChunked(csvText, stats);
         }
 
-        // Store only aggregated stats (much smaller - no quota issues)
-        localStorage.setItem('processedData', JSON.stringify(stats));
-        localStorage.setItem('processedFile', file.name);
-        localStorage.setItem('uploadTimestamp', Date.now().toString());
-        // Force refresh by adding timestamp to URL
-        window.location.href = 'dashboard.html?t=' + Date.now();
+        finishProcessing(stats, file.name);
 
     } catch (error) {
         console.error("ZIP extraction failed:", error);
@@ -304,11 +254,8 @@ async function handlePDFFile(file) {
 
 function extractTableDataFromPDFText(text) {
     // Basic heuristic to find state data rows
-    // Looks for lines that look like: "StateName Number Number ..."
     const lines = text.split('\n');
     const data = [];
-
-    // Common state names to look for (start of line)
     const states = [
         "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
         "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh",
@@ -320,18 +267,14 @@ function extractTableDataFromPDFText(text) {
 
     lines.forEach(line => {
         const trimmed = line.trim();
-        // Check if line starts with a state name
         const stateMatch = states.find(s => trimmed.toLowerCase().startsWith(s.toLowerCase()));
 
         if (stateMatch) {
             // Try to extract numbers following the state name
-            // Remove the state name and commas
             const remainder = trimmed.substring(stateMatch.length).replace(/,/g, '');
             const numbers = remainder.match(/(\d+)/g);
 
             if (numbers && numbers.length > 0) {
-                // Construct a data object
-                // We assume the first number is Total Enrolment, second is Updates, etc.
                 const row = {
                     state: stateMatch,
                     age_0_5: numbers[0] || 0,
@@ -347,78 +290,122 @@ function extractTableDataFromPDFText(text) {
     return data;
 }
 
-function handleCSVFile(file) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        const text = e.target.result;
-        const rows = text.split('\n').map(row => row.split(','));
-        const headers = rows[0].map(h => h.trim().toLowerCase());
+function processContentChunked(text, stats) {
+    return new Promise(resolve => {
+        const lines = text.split(/\r\n|\n/);
+        if (lines.length < 2) { resolve(); return; }
 
-        const hasBio = headers.some(h => h.includes('bio_age'));
-        const hasDemo = headers.some(h => h.includes('demo_age'));
-        const hasEnrol = headers.some(h => h.includes('age_0_5') || h.includes('age_5_17'));
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        console.log("Detected Headers:", headers);
 
-        let stats = {
-            totalEnrolments: 0,
-            totalUpdates: 0,
-            biometricUpdates: 0,
-            demographicUpdates: 0,
-            genderCounts: { Male: 0, Female: 0, Other: 0 },
-            ageCounts: { '0-5': 0, '5-18': 0, '18-45': 0, '45-60': 0, '60+': 0 },
-            stateCounts: {}
-        };
+        const bioCols = findCols(headers, ['bio_age', 'biometric', 'bio_update', 'bio_metric']);
+        const demoCols = findCols(headers, ['demo_age', 'demographic', 'demo_update']);
+        const enrolCols = findCols(headers, ['age_0_5', 'age_5', 'age_18', 'enrolment', 'generated'], ['bio', 'demo', 'update']);
 
-        for (let i = 1; i < rows.length; i++) {
-            const row = rows[i];
-            if (row.length <= 1) continue;
+        const genderColName = headers.find(h => ['gender', 'sex', 'gender_category'].some(g => h.includes(g)));
+        if (genderColName) stats.hasGenderData = true;
 
-            let rowData = {};
-            headers.forEach((h, idx) => {
-                rowData[h] = row[idx]?.trim();
-            });
+        if (bioCols.length > 0) stats.data_types.push('biometric');
+        if (demoCols.length > 0) stats.data_types.push('demographic');
+        if (enrolCols.length > 0) stats.data_types.push('enrolment');
 
-            let count = 0;
+        const stateIdx = headers.findIndex(h => h.includes('state') || h.includes('region'));
 
-            if (hasBio) {
-                const bio517 = parseInt(rowData['bio_age_5_17']) || 0;
-                const bio17 = parseInt(rowData['bio_age_17_']) || 0;
-                count = bio517 + bio17;
-                stats.totalUpdates += count;
-                stats.biometricUpdates += count;
-                stats.ageCounts['5-18'] += bio517;
-                stats.ageCounts['18-45'] += bio17;
-            } else if (hasDemo) {
-                const demo517 = parseInt(rowData['demo_age_5_17']) || 0;
-                const demo17 = parseInt(rowData['demo_age_17_']) || 0;
-                count = demo517 + demo17;
-                stats.totalUpdates += count;
-                stats.demographicUpdates += count;
-                stats.ageCounts['5-18'] += demo517;
-                stats.ageCounts['18-45'] += demo17;
-            } else if (hasEnrol) {
-                const age05 = parseInt(rowData['age_0_5']) || 0;
-                const age517 = parseInt(rowData['age_5_17']) || 0;
-                const age18 = parseInt(rowData['age_18_greater']) || 0;
-                count = age05 + age517 + age18;
-                stats.totalEnrolments += count;
-                stats.ageCounts['0-5'] += age05;
-                stats.ageCounts['5-18'] += age517;
-                stats.ageCounts['18-45'] += age18;
+        // Process in chunks of 5000 lines
+        const chunkSize = 5000;
+        let index = 1;
+
+        function processChunk() {
+            const end = Math.min(index + chunkSize, lines.length);
+
+            for (; index < end; index++) {
+                const row = lines[index].split(',');
+                if (row.length <= 1) continue;
+
+                stats.totalRows++;
+                let rowActivity = 0;
+
+                // Biometric
+                if (bioCols.length > 0) {
+                    const val = sumCols(row, bioCols, headers);
+                    if (val > 0) {
+                        stats.biometricUpdates += val;
+                        stats.totalUpdates += val;
+                        rowActivity += val;
+                        bioCols.forEach(col => {
+                            const idx = headers.indexOf(col);
+                            const val = cleanInt(row[idx]);
+                            if (col.includes('5_17') || col.includes('5-18')) stats.ageCounts['5-18'] += val;
+                            else if (col.includes('18_') || col.includes('18+')) stats.ageCounts['18-45'] += val;
+                        });
+                    }
+                }
+
+                // Demographic
+                if (demoCols.length > 0) {
+                    const val = sumCols(row, demoCols, headers);
+                    if (val > 0) {
+                        stats.demographicUpdates += val;
+                        stats.totalUpdates += val;
+                        rowActivity += val;
+                        demoCols.forEach(col => {
+                            const idx = headers.indexOf(col);
+                            const val = cleanInt(row[idx]);
+                            if (col.includes('5_17') || col.includes('5-18')) stats.ageCounts['5-18'] += val;
+                            else if (col.includes('18_') || col.includes('18+')) stats.ageCounts['18-45'] += val;
+                        });
+                    }
+                }
+
+                // Enrolment
+                if (enrolCols.length > 0) {
+                    const val = sumCols(row, enrolCols, headers);
+                    if (val > 0) {
+                        stats.totalEnrolments += val;
+                        rowActivity += val;
+                        enrolCols.forEach(col => {
+                            const idx = headers.indexOf(col);
+                            const val = cleanInt(row[idx]);
+                            if (col.includes('0_5') || col.includes('0-5')) stats.ageCounts['0-5'] += val;
+                            else if (col.includes('5_17') || col.includes('5-18')) stats.ageCounts['5-18'] += val;
+                            else if (col.includes('18_') || col.includes('18+')) stats.ageCounts['18-45'] += val;
+                        });
+                    }
+                }
+
+                // Gender
+                if (genderColName) {
+                    const gVal = (row[headers.indexOf(genderColName)] || '').toLowerCase().trim();
+                    if (gVal.startsWith('m') || gVal === '1') stats.genderCounts.Male++;
+                    else if (gVal.startsWith('f') || gVal === '2') stats.genderCounts.Female++;
+                    else if (gVal) stats.genderCounts.Other++;
+                }
+
+                // State
+                if (stateIdx !== -1) {
+                    const state = (row[stateIdx] || '').trim();
+                    // In raw mode or activity mode, we count this row towards the state
+                    const increment = rowActivity > 0 ? rowActivity : 1;
+                    if (state && increment > 0) {
+                        stats.stateCounts[state] = (stats.stateCounts[state] || 0) + increment;
+                    }
+                }
             }
 
-            const state = rowData['state'];
-            if (state && count > 0) {
-                stats.stateCounts[state] = (stats.stateCounts[state] || 0) + count;
+            if (index < lines.length) {
+                // Yield to main thread to keep UI responsive
+                setTimeout(processChunk, 0);
+            } else {
+                resolve();
             }
         }
 
-        // Store only aggregated stats - no quota issues!
-        localStorage.setItem('processedData', JSON.stringify(stats));
-        localStorage.setItem('processedFile', file.name);
-        localStorage.setItem('uploadTimestamp', Date.now().toString());
-        window.location.href = 'dashboard.html?t=' + Date.now();
-    };
-    reader.readAsText(file);
+        processChunk();
+    });
+}
+
+function cleanInt(val) {
+    return parseInt((val || '').toString().trim().replace(/['",]/g, '')) || 0;
 }
 
 function updateStepIcon(element, iconClass, isSuccess = false) {
@@ -439,3 +426,58 @@ function formatBytes(bytes, decimals = 2) {
 cancelBtn.addEventListener('click', () => {
     location.reload();
 });
+
+// Shared Helper for detecting columns
+function findCols(headers, includes, excludes = []) {
+    return headers.filter(h =>
+        includes.some(inc => h.includes(inc)) &&
+        !excludes.some(exc => h.includes(exc)) &&
+        !h.includes('reject')
+    );
+}
+
+// Helper to sum values from a list of columns
+function sumCols(row, cols, headers) {
+    return cols.reduce((sum, colName) => {
+        const idx = headers.indexOf(colName);
+        if (idx === -1) return sum;
+        return sum + cleanInt(row[idx]);
+    }, 0);
+}
+
+function initStats() {
+    return {
+        totalEnrolments: 0,
+        totalUpdates: 0,
+        biometricUpdates: 0,
+        demographicUpdates: 0,
+        genderCounts: { Male: 0, Female: 0, Other: 0 },
+        ageCounts: { '0-5': 0, '5-18': 0, '18-45': 0, '45-60': 0, '60+': 0 },
+        stateCounts: {},
+        data_types: [], // Track types found
+        hasGenderData: false,
+        totalRows: 0 // Track physical rows
+    };
+}
+
+function finishProcessing(stats, fileName) {
+    if (stats.totalEnrolments === 0 && stats.totalUpdates === 0 && stats.totalRows === 0) {
+        alert("Warning: No valid data detected. Please check your CSV column headers.\nStandard headers expected: 'State', 'Biometric Updates', 'Demographic Updates', 'Enrolment Generated'");
+        console.warn("Stats were empty", stats);
+    }
+
+    // Aggressive Correction: If detected activity is less than row count, assume remaining rows are simple enrolments
+    const totalActivity = stats.totalEnrolments + stats.totalUpdates;
+    if (totalActivity < stats.totalRows) {
+        console.log(`Adjusting counts: Total Rows (${stats.totalRows}) > Activity (${totalActivity}). Adding difference to Enrolments.`);
+        stats.totalEnrolments += (stats.totalRows - totalActivity);
+    }
+
+    // De-dupe data types
+    stats.data_types = [...new Set(stats.data_types)];
+
+    localStorage.setItem('processedData', JSON.stringify(stats));
+    localStorage.setItem('processedFile', fileName);
+    localStorage.setItem('uploadTimestamp', Date.now().toString());
+    window.location.href = 'dashboard.html?t=' + Date.now();
+}

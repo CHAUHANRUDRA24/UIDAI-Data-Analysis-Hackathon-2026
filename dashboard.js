@@ -51,23 +51,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const storedFile = localStorage.getItem('processedFile');
     const storedDataJSON = localStorage.getItem('processedData');
 
-
-    // Check if we have pre-calculated python data (simulated check, normally fetch)
-    // ONLY fetch if we don't have local session data from an upload
-    if (!storedDataJSON) {
-        fetch('dashboard_data.json')
-            .then(response => {
-                if (!response.ok) throw new Error("Not found");
-                return response.json();
-            })
-            .then(data => {
-                console.log("Loaded dashboard_data.json from server");
-                updateDashboardViews(data);
-            })
-            .catch(err => console.log("No external dashboard_data.json found, using local/demo data"));
-    } else {
-        console.log("Skipping server data fetch in favor of local session data");
-    }
     if (storedFile && storedDataJSON) {
         console.log("Found uploaded data for: " + storedFile);
         try {
@@ -227,9 +210,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateDashboardViews(stats) {
-        // Update UI Elements
-        document.querySelector('.kpi-card:nth-child(1) .value').textContent = stats.totalEnrolments.toLocaleString();
-        document.querySelector('.kpi-card:nth-child(2) .value').textContent = stats.totalUpdates.toLocaleString();
+        // Update UI Elements with Animation
+        animateValue(document.querySelector('.kpi-card:nth-child(1) .value'), 0, stats.totalEnrolments, 1500);
+        animateValue(document.querySelector('.kpi-card:nth-child(2) .value'), 0, stats.totalUpdates, 1500);
 
         // Update Charts
         updateUpdatesChart(stats.biometricUpdates, stats.demographicUpdates);
@@ -259,6 +242,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Store for language updates
         window.initialData = stats;
+    }
+
+    function animateValue(obj, start, end, duration) {
+        if (!obj) return;
+
+        // Dynamic duration: Scale up for larger numbers to make it look "epic"
+        if (!duration) {
+            duration = end > 500000 ? 3000 : 1500;
+        }
+
+        // Reset to start value immediately (forces "0" look at start)
+        obj.textContent = start.toLocaleString('en-IN'); // Use Indian format
+
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            // Ease-out function for smoother landing: 1 - Math.pow(1 - progress, 3)
+            const ease = 1 - Math.pow(1 - progress, 3);
+
+            const currentVal = Math.floor(ease * (end - start) + start);
+            obj.textContent = currentVal.toLocaleString('en-IN');
+
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
     }
 
     function updateInsights(insights) {
