@@ -64,10 +64,10 @@ function handleFiles(files) {
 
 function validateAndPrepare(file) {
     const validTypes = ['text/csv', 'application/zip', 'application/x-zip-compressed', 'application/x-zip'];
-    
+
     const fileExt = file.name.split('.').pop().toLowerCase();
     const isValid = validTypes.includes(file.type) || fileExt === 'csv' || fileExt === 'zip';
-    
+
     if (!isValid) {
         alert('Please upload a CSV or ZIP file');
         return;
@@ -137,7 +137,7 @@ function simulateProgress(file) {
 
             // Check if file is ZIP or CSV
             const fileExt = file.name.split('.').pop().toLowerCase();
-            
+
             if (fileExt === 'zip') {
                 handleZipFile(file);
             } else {
@@ -160,9 +160,9 @@ async function handleZipFile(file) {
 
         const zip = new JSZip();
         const contents = await zip.loadAsync(file);
-        
+
         let allData = [];
-        const csvFiles = Object.keys(contents.files).filter(name => 
+        const csvFiles = Object.keys(contents.files).filter(name =>
             name.toLowerCase().endsWith('.csv') && !name.startsWith('__MACOSX')
         );
 
@@ -210,7 +210,8 @@ function handleCSVFile(file) {
     const reader = new FileReader();
     reader.onload = function (e) {
         const text = e.target.result;
-        const rows = text.split('\n').slice(0, 2000).map(row => row.split(','));
+        // removed slice limit
+        const rows = text.split('\n').map(row => row.split(','));
         const headers = rows[0].map(h => h.trim().toLowerCase());
 
         const parsedData = rows.slice(1).filter(r => r.length > 1).map(row => {
@@ -227,8 +228,12 @@ function handleCSVFile(file) {
             window.location.href = 'dashboard.html';
         } catch (err) {
             console.error("Storage failed: ", err);
-            alert("File too large for local storage demonstration. Using sample data.");
-            window.location.href = 'dashboard.html';
+            if (err.name === 'QuotaExceededError') {
+                alert("File is too large for browser storage. Please use the Python backend option for large datasets, or try a smaller file.");
+                window.location.href = 'dashboard.html?error=quota';
+            } else {
+                alert("Error processing file: " + err.message);
+            }
         }
     };
     reader.readAsText(file);

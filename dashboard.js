@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Check for "processed" data from upload flow
     const storedFile = localStorage.getItem('processedFile');
     const storedDataJSON = localStorage.getItem('processedData');
-    
-    
+
+
     // Check if we have pre-calculated python data (simulated check, normally fetch)
     fetch('dashboard_data.json')
         .then(response => {
@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', function () {
             return response.json();
         })
         .then(data => {
-             console.log("Loaded dashboard_data.json from server");
-             updateDashboardViews(data);
+            console.log("Loaded dashboard_data.json from server");
+            updateDashboardViews(data);
         })
         .catch(err => console.log("No external dashboard_data.json found, using local/demo data"));
 
@@ -27,11 +27,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = JSON.parse(storedDataJSON);
             // Check if data is already in summary format (from Python script)
             if (data.totalEnrolments !== undefined && data.stateCounts !== undefined) {
-                 console.log("Detected pre-calculated summary data");
-                 updateDashboardViews(data);
+                console.log("Detected pre-calculated summary data");
+                updateDashboardViews(data);
             } else {
-                 console.log("Detected raw rows, processing...");
-                 processRealData(data);
+                console.log("Detected raw rows, processing...");
+                processRealData(data);
             }
         } catch (e) {
             console.error("Failed to parse stored data", e);
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Expose function for external calls (e.g. from file upload of JSON)
-    window.loadDashboardStats = function(stats) {
+    window.loadDashboardStats = function (stats) {
         updateDashboardViews(stats);
     };
 
@@ -83,12 +83,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 const bio17plus = getKey(row, 'bio_age_17_');
                 if (bio517) rowCount += parseInt(row[bio517]) || 0;
                 if (bio17plus) rowCount += parseInt(row[bio17plus]) || 0;
-                
+
                 if (rowCount > 0) {
                     stats.totalUpdates += rowCount;
                     stats.biometricUpdates += rowCount;
                     isBiometric = true;
-                    
+
                     // Add to age counts
                     if (bio517) stats.ageCounts['5-18'] += parseInt(row[bio517]) || 0;
                     if (bio17plus) stats.ageCounts['18-45'] += parseInt(row[bio17plus]) || 0;
@@ -99,12 +99,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 const demo17plus = getKey(row, 'demo_age_17_');
                 if (demo517) rowCount += parseInt(row[demo517]) || 0;
                 if (demo17plus) rowCount += parseInt(row[demo17plus]) || 0;
-                
+
                 if (rowCount > 0) {
                     stats.totalUpdates += rowCount;
                     stats.demographicUpdates += rowCount;
                     isDemographic = true;
-                    
+
                     // Add to age counts
                     if (demo517) stats.ageCounts['5-18'] += parseInt(row[demo517]) || 0;
                     if (demo17plus) stats.ageCounts['18-45'] += parseInt(row[demo17plus]) || 0;
@@ -114,15 +114,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 const age05 = getKey(row, 'age_0_5');
                 const age517 = getKey(row, 'age_5_17');
                 const age18plus = getKey(row, 'age_18_greater');
-                
+
                 if (age05) rowCount += parseInt(row[age05]) || 0;
                 if (age517) rowCount += parseInt(row[age517]) || 0;
                 if (age18plus) rowCount += parseInt(row[age18plus]) || 0;
-                
+
                 if (rowCount > 0) {
                     stats.totalEnrolments += rowCount;
                     isEnrolment = true;
-                    
+
                     // Add to age counts
                     if (age05) stats.ageCounts['0-5'] += parseInt(row[age05]) || 0;
                     if (age517) stats.ageCounts['5-18'] += parseInt(row[age517]) || 0;
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
         updateAgeChart(stats.ageCounts);
         updateGenderStats(stats.genderCounts);
         updateStateStats(stats.stateCounts);
-        
+
         // Update modal data if function exists
         if (window.updateModalData) {
             window.updateModalData(stats);
@@ -409,18 +409,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Store current stats globally for modal access
     window.currentStats = null;
-    
+
     // Update modal data function
-    window.updateModalData = function(stats) {
+    window.updateModalData = function (stats) {
         if (!stats) return;
         window.currentStats = stats;
-        
+
         // Enrolment Modal
         const enrolmentTotal = document.getElementById('enrolmentTotal');
         if (enrolmentTotal) {
             enrolmentTotal.textContent = stats.totalEnrolments.toLocaleString();
         }
-        
+
         const enrolmentAvg = document.getElementById('enrolmentAvg');
         if (enrolmentAvg) {
             enrolmentAvg.textContent = Math.round(stats.totalEnrolments / 30).toLocaleString() + '/day';
@@ -436,18 +436,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             `).join('');
         }
-        
+
         // Updates Modal
         const updatesTotal = document.getElementById('updatesTotal');
         if (updatesTotal) {
             updatesTotal.textContent = stats.totalUpdates.toLocaleString();
         }
-        
+
         const updatesBio = document.getElementById('updatesBio');
         if (updatesBio) {
             updatesBio.textContent = stats.biometricUpdates.toLocaleString();
         }
-        
+
         const updatesDemo = document.getElementById('updatesDemo');
         if (updatesDemo) {
             updatesDemo.textContent = stats.demographicUpdates.toLocaleString();
@@ -586,3 +586,97 @@ function initAgeChart() {
         }
     });
 }
+
+// File Viewer Modal Logic
+document.addEventListener('DOMContentLoaded', function () {
+    const viewFileBtn = document.getElementById('viewFileBtn');
+    const fileModal = document.getElementById('fileModal');
+    const closeFileBtn = document.getElementById('closeFileModalBtn');
+    const fileTableHead = document.getElementById('fileTableHead');
+    const fileTableBody = document.getElementById('fileTableBody');
+
+    if (viewFileBtn && fileModal && closeFileBtn) {
+        // Pagination State
+        let currentPage = 1;
+        const rowsPerPage = 100;
+        let tableData = [];
+
+        function renderTable(page) {
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const displayData = tableData.slice(start, end);
+
+            // Should already have headers if data > 0
+            if (displayData.length > 0) {
+                const headers = Object.keys(tableData[0]);
+                fileTableBody.innerHTML = displayData.map(row => `
+                    <tr>${headers.map(h => `<td>${row[h] || ''}</td>`).join('')}</tr>
+                `).join('');
+            }
+
+            // Update Footer
+            const totalPages = Math.ceil(tableData.length / rowsPerPage) || 1;
+            document.getElementById('pageInfo').textContent = `Page ${page} of ${totalPages} (${tableData.length} records)`;
+            document.getElementById('prevPageBtn').disabled = page === 1;
+            document.getElementById('nextPageBtn').disabled = page === totalPages;
+        }
+
+        document.getElementById('prevPageBtn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable(currentPage);
+            }
+        });
+
+        document.getElementById('nextPageBtn').addEventListener('click', () => {
+            const totalPages = Math.ceil(tableData.length / rowsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable(currentPage);
+            }
+        });
+
+        viewFileBtn.addEventListener('click', () => {
+            const storedDataJSON = localStorage.getItem('processedData');
+
+            if (!storedDataJSON) {
+                alert("No data found to display. Please upload a file first.");
+                return;
+            }
+
+            try {
+                tableData = JSON.parse(storedDataJSON);
+                currentPage = 1;
+
+                if (tableData.length > 0) {
+                    // Populate Headers Once
+                    const headers = Object.keys(tableData[0]);
+                    fileTableHead.innerHTML = `<tr>${headers.map(h => `<th>${h.toUpperCase()}</th>`).join('')}</tr>`;
+
+                    // Render First Page
+                    renderTable(currentPage);
+                }
+
+                fileModal.classList.remove('hidden');
+                setTimeout(() => fileModal.classList.add('show'), 10);
+
+            } catch (e) {
+                console.error("Error parsing data for table view", e);
+                alert("Error displaying data: " + e.message);
+            }
+        });
+
+        const closeFileModal = () => {
+            fileModal.classList.remove('show');
+            setTimeout(() => fileModal.classList.add('hidden'), 300);
+        };
+
+        closeFileBtn.addEventListener('click', closeFileModal);
+
+        fileModal.addEventListener('click', (e) => {
+            if (e.target === fileModal) {
+                closeFileModal();
+            }
+        });
+    }
+});

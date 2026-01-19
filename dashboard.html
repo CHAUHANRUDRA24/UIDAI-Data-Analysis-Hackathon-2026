@@ -60,6 +60,9 @@
                         <h1>Executive Overview</h1>
                         <p>Real-time insights from uploaded dataset</p>
                     </div>
+                    <button id="viewFileBtn" class="btn-primary-small" style="gap: 8px;">
+                        <i class="fa-solid fa-file-csv"></i> View Source File
+                    </button>
                 </header>
 
                 <!-- Dashboard Grid -->
@@ -480,6 +483,30 @@
                         <li>OTP - 8%</li>
                         <li>Face Recognition - 2%</li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Viewer Modal -->
+    <div id="fileModal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" style="max-width: 900px; height: 80vh;">
+            <div class="modal-header">
+                <h3>Source Data Viewer</h3>
+                <button id="closeFileModalBtn" class="btn-icon-small"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div style="overflow-x: auto; height: calc(100% - 60px);">
+                    <table class="states-table" id="fileDataTable">
+                        <thead id="fileTableHead"></thead>
+                        <tbody id="fileTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination-footer"
+                    style="padding: 10px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border);">
+                    <button id="prevPageBtn" class="btn-primary-small" disabled>Previous</button>
+                    <span id="pageInfo" style="font-size: 13px; font-weight: 500;">Page 1 of 1</span>
+                    <button id="nextPageBtn" class="btn-primary-small">Next</button>
                 </div>
             </div>
         </div>
