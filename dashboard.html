@@ -74,18 +74,18 @@
                             <div class="icon-box blue">
                                 <i class="fa-solid fa-users"></i>
                             </div>
-                            <div class="trend up">
+                            <div class="trend up" style="display: none;">
                                 <i class="fa-solid fa-arrow-trend-up"></i>
-                                <span>12.5%</span>
+                                <span>-</span>
                             </div>
                         </div>
                         <div class="kpi-value-group">
-                            <h2 class="value">2,543,901</h2>
+                            <h2 class="value">0</h2>
                             <p class="label">Total Enrolments</p>
                         </div>
-                        <div class="insight-badge success">
+                        <div class="insight-badge success" style="display: none;">
                             <i class="fa-solid fa-check"></i>
-                            <span>Normal Activity</span>
+                            <span>Upload data to view insights</span>
                         </div>
                     </div>
 
@@ -95,18 +95,18 @@
                             <div class="icon-box purple">
                                 <i class="fa-solid fa-arrows-rotate"></i>
                             </div>
-                            <div class="trend down">
+                            <div class="trend down" style="display: none;">
                                 <i class="fa-solid fa-arrow-trend-down"></i>
-                                <span>3.2%</span>
+                                <span>-</span>
                             </div>
                         </div>
                         <div class="kpi-value-group">
-                            <h2 class="value">856,120</h2>
+                            <h2 class="value">0</h2>
                             <p class="label">Total Updates</p>
                         </div>
-                        <div class="insight-badge warning">
+                        <div class="insight-badge warning" style="display: none;">
                             <i class="fa-solid fa-triangle-exclamation"></i>
-                            <span>Slight Dip</span>
+                            <span>Upload data to view insights</span>
                         </div>
                     </div>
 
@@ -124,20 +124,20 @@
                                 <div class="legend-item">
                                     <span class="dot purple"></span>
                                     <div>
-                                        <span class="l-val">65%</span>
+                                        <span class="l-val">0%</span>
                                         <span class="l-lbl">Biometric</span>
                                     </div>
                                 </div>
                                 <div class="legend-item">
                                     <span class="dot blue"></span>
                                     <div>
-                                        <span class="l-val">35%</span>
+                                        <span class="l-val">0%</span>
                                         <span class="l-lbl">Demographic</span>
                                     </div>
                                 </div>
-                                <div class="insight-text">
+                                <div class="insight-text" style="display: none;">
                                     <i class="fa-solid fa-circle-info"></i>
-                                    <span>High biometric updates due to mandatory renewals.</span>
+                                    <span>Upload data to view breakdown</span>
                                 </div>
                             </div>
                         </div>
@@ -150,59 +150,16 @@
                             <button id="viewAllStatesBtn" class="btn-text">View All</button>
                         </div>
                         <div class="region-list">
-                            <!-- Top 3 are static here, but we will have a modal for all -->
-                            <div class="region-item">
-                                <div class="rank">1</div>
-                                <div class="region-info">
-                                    <h4>Uttar Pradesh</h4>
-                                    <div class="bar-bg">
-                                        <div class="bar-fill" style="width: 85%"></div>
-                                    </div>
-                                </div>
-                                <div class="region-stats">
-                                    <span class="r-val">854k</span>
-                                    <span class="r-trend up">
-                                        <i class="fa-solid fa-arrow-up"></i> 5%
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="region-item">
-                                <div class="rank">2</div>
-                                <div class="region-info">
-                                    <h4>Maharashtra</h4>
-                                    <div class="bar-bg">
-                                        <div class="bar-fill" style="width: 72%"></div>
-                                    </div>
-                                </div>
-                                <div class="region-stats">
-                                    <span class="r-val">721k</span>
-                                    <span class="r-trend up">
-                                        <i class="fa-solid fa-arrow-up"></i> 8%
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="region-item">
-                                <div class="rank">3</div>
-                                <div class="region-info">
-                                    <h4>Bihar</h4>
-                                    <div class="bar-bg">
-                                        <div class="bar-fill" style="width: 64%"></div>
-                                    </div>
-                                </div>
-                                <div class="region-stats">
-                                    <span class="r-val">640k</span>
-                                    <span class="r-trend down">
-                                        <i class="fa-solid fa-arrow-down"></i> 2%
-                                    </span>
-                                </div>
+                            <!-- Populated dynamically from uploaded data -->
+                            <div class="empty-state" style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                                <i class="fa-solid fa-map-location-dot" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
+                                <p style="margin: 0;">Upload your CSV data to view regional analytics</p>
                             </div>
                         </div>
 
-                        <div class="anomaly-alert">
+                        <div class="anomaly-alert" style="display: none;">
                             <i class="fa-solid fa-bolt"></i>
-                            <span><strong>Anomaly:</strong> Unusual spike in MP detected yesterday.</span>
+                            <span><strong>Anomaly:</strong> Detected from your data</span>
                         </div>
                     </div>
 
@@ -253,31 +210,31 @@
                                 <div class="g-info">
                                     <span class="g-label">Male</span>
                                     <div class="g-bar-bg">
-                                        <div class="g-bar-fill" style="width: 52%; background: #6366f1;"></div>
+                                        <div class="g-bar-fill" style="width: 0%; background: #6366f1;"></div>
                                     </div>
                                 </div>
-                                <span class="g-val">52%</span>
+                                <span class="g-val">0%</span>
                             </div>
                             <div class="gender-row" style="margin-top: 15px;">
                                 <div class="g-info">
                                     <span class="g-label">Female</span>
                                     <div class="g-bar-bg">
-                                        <div class="g-bar-fill" style="width: 47%; background: #ec4899;"></div>
+                                        <div class="g-bar-fill" style="width: 0%; background: #ec4899;"></div>
                                     </div>
                                 </div>
-                                <span class="g-val">47%</span>
+                                <span class="g-val">0%</span>
                             </div>
                             <div class="gender-row" style="margin-top: 15px;">
                                 <div class="g-info">
                                     <span class="g-label">Other</span>
                                     <div class="g-bar-bg">
-                                        <div class="g-bar-fill" style="width: 1%; background: #a855f7;"></div>
+                                        <div class="g-bar-fill" style="width: 0%; background: #a855f7;"></div>
                                     </div>
                                 </div>
-                                <span class="g-val">1%</span>
+                                <span class="g-val">0%</span>
                             </div>
-                            <div class="insight-text" style="margin-top: 20px;">
-                                <i class="fa-solid fa-check"></i> Balanced ratio
+                            <div class="insight-text" style="margin-top: 20px; display: none;">
+                                <i class="fa-solid fa-check"></i> Upload data to view distribution
                             </div>
                         </div>
                     </div>

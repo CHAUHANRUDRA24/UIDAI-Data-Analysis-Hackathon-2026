@@ -472,7 +472,7 @@ function initUpdatesChart() {
         data: {
             labels: ['Biometric', 'Demographic'],
             datasets: [{
-                data: [65, 35],
+                data: [0, 0],
                 backgroundColor: [
                     '#a855f7',
                     '#4f46e5'
@@ -526,7 +526,7 @@ function initAgeChart() {
             labels: ['0-5', '5-18', '18-45', '45-60', '60+'],
             datasets: [{
                 label: 'Enrolments',
-                data: [120, 250, 450, 180, 90], // Demo data
+                data: [0, 0, 0, 0, 0],
                 backgroundColor: gradientFill,
                 borderColor: '#4f46e5',
                 borderWidth: 1,
