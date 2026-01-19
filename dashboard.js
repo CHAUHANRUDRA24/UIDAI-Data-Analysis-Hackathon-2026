@@ -1,10 +1,53 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Bilingual Support Logic
+    let currentLang = 'en';
+    let translations = {};
+
+    async function loadTranslations() {
+        try {
+            const response = await fetch('translations.json');
+            translations = await response.json();
+            console.log("Translations loaded");
+            updatePageLanguage();
+        } catch (e) {
+            console.error("Failed to load translations", e);
+        }
+    }
+
+    // MANDATORY FALLBACK LOGIC
+    function getText(key) {
+        return translations[currentLang]?.[key]
+            || translations['en']?.[key]
+            || key;
+    }
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        updatePageLanguage();
+    }
+
+    function updatePageLanguage() {
+        const elements = document.querySelectorAll('[data-i18n]');
+        elements.forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            el.textContent = getText(key);
+        });
+
+        // Expose to global for chart updates
+        window.getText = getText;
+        if (typeof window.initialData !== 'undefined') {
+            updateDashboardViews(window.initialData);
+        }
+    }
+
     // Initialize Charts
     initUpdatesChart();
     initAgeChart();
 
-    // Check for "processed" data from upload flow (simulated)
-    // Check for "processed" data from upload flow
+    // Load translations
+    loadTranslations();
+
+    // Check for uploaded data from localStorage FIRST (highest priority)
     const storedFile = localStorage.getItem('processedFile');
     const storedDataJSON = localStorage.getItem('processedData');
 
@@ -25,27 +68,61 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         console.log("Skipping server data fetch in favor of local session data");
     }
-
     if (storedFile && storedDataJSON) {
-        console.log("Loaded data for: " + storedFile);
+        console.log("Found uploaded data for: " + storedFile);
         try {
             const data = JSON.parse(storedDataJSON);
-            // Check if data is already in summary format (from Python script)
+            // Check if data is already in summary format
             if (data.totalEnrolments !== undefined && data.stateCounts !== undefined) {
-                console.log("Detected pre-calculated summary data");
+                console.log("Loading uploaded summary data");
                 updateDashboardViews(data);
+                showDataTypeBadges(data);
+                applyConditionalVisibility(data);
+                // Clear after loading to ensure fresh data on next upload
+                // localStorage.removeItem('processedData');
+                // localStorage.removeItem('processedFile');
             } else {
-                console.log("Detected raw rows, processing...");
+                console.log("Processing uploaded raw data");
                 processRealData(data);
             }
         } catch (e) {
-            console.error("Failed to parse stored data", e);
+            console.error("Failed to parse uploaded data", e);
+            loadFallbackData();
         }
     } else {
-        console.log("No stored data found. Initializing with defaults.");
+        // No uploaded data, try to load dashboard_data.json
+        loadFallbackData();
     }
 
-    // Expose function for external calls (e.g. from file upload of JSON)
+    // Language Toggle Button
+    const langToggleBtn = document.getElementById('langToggleBtn');
+    const langText = document.getElementById('langText');
+    if (langToggleBtn) {
+        langToggleBtn.addEventListener('click', () => {
+            currentLang = currentLang === 'en' ? 'hi' : 'en';
+            langText.textContent = currentLang === 'en' ? 'हिंदी' : 'English';
+            updatePageLanguage();
+        });
+    }
+
+    function loadFallbackData() {
+        fetch('dashboard_data.json')
+            .then(response => {
+                if (!response.ok) throw new Error("Not found");
+                return response.json();
+            })
+            .then(data => {
+                console.log("Loaded dashboard_data.json from server");
+                updateDashboardViews(data);
+                showDataTypeBadges(data);
+                applyConditionalVisibility(data);
+            })
+            .catch(err => {
+                console.log("No data available. Dashboard showing empty state.");
+            });
+    }
+
+    // Expose function for external calls
     window.loadDashboardStats = function (stats) {
         updateDashboardViews(stats);
     };
@@ -160,10 +237,83 @@ document.addEventListener('DOMContentLoaded', function () {
         updateGenderStats(stats.genderCounts);
         updateStateStats(stats.stateCounts);
 
+        // Update Insights if available
+        if (stats.insights) {
+            updateInsights(stats.insights);
+        }
+
+        // Update District Scores if available
+        if (stats.district_scores) {
+            updateDistrictScores(stats.district_scores);
+        }
+
+        // Show validation status if available
+        if (stats.validation && stats.validation.status !== 'PASS') {
+            showValidationWarnings(stats.validation);
+        }
+
         // Update modal data if function exists
         if (window.updateModalData) {
             window.updateModalData(stats);
         }
+
+        // Store for language updates
+        window.initialData = stats;
+    }
+
+    function updateInsights(insights) {
+        // Display executive summary
+        const summaryEl = document.getElementById('executiveSummary');
+        if (summaryEl && insights.executive_summary) {
+            summaryEl.textContent = insights.executive_summary;
+        }
+
+        // Display key findings
+        const findingsEl = document.getElementById('keyFindings');
+        if (findingsEl && insights.key_findings && insights.key_findings.length > 0) {
+            findingsEl.innerHTML = insights.key_findings.map(finding =>
+                `<li><i class="fa-solid fa-lightbulb"></i> ${finding}</li>`
+            ).join('');
+        }
+
+        // Display recommendations
+        const recsEl = document.getElementById('recommendations');
+        if (recsEl && insights.recommendations && insights.recommendations.length > 0) {
+            recsEl.innerHTML = insights.recommendations.map(rec =>
+                `<li><i class="fa-solid fa-arrow-right"></i> ${rec}</li>`
+            ).join('');
+        }
+    }
+
+    function updateDistrictScores(scores) {
+        const scoresEl = document.getElementById('districtScores');
+        if (!scoresEl) return;
+
+        const top5 = Object.entries(scores).slice(0, 5);
+        scoresEl.innerHTML = top5.map(([district, score], idx) => `
+            <div class="score-item">
+                <div class="score-rank">${idx + 1}</div>
+                <div class="score-name">${district}</div>
+                <div class="score-value ${score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low'}">
+                    ${score}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function showValidationWarnings(validation) {
+        const warningEl = document.getElementById('validationWarnings');
+        if (!warningEl) return;
+
+        warningEl.style.display = 'block';
+        warningEl.innerHTML = `
+            <div class="alert alert-${validation.status === 'FAIL' ? 'danger' : 'warning'}">
+                <strong>Validation Status: ${validation.status}</strong>
+                <ul>
+                    ${validation.issues.map(issue => `<li>${issue}</li>`).join('')}
+                </ul>
+            </div>
+        `;
     }
 
     function updateUpdatesChart(bioBytes, demoBytes) {
@@ -212,6 +362,100 @@ document.addEventListener('DOMContentLoaded', function () {
 
             rows[1].querySelector('.g-bar-fill').style.width = `${fp}%`;
             rows[1].querySelector('.g-val').textContent = `${fp}%`;
+        }
+    }
+
+    function showDataTypeBadges(stats) {
+        // Add badges showing which data types were loaded
+        const headerText = document.querySelector('.header-text');
+
+        // Remove existing badges
+        const existingBadges = document.getElementById('dataTypeBadges');
+        if (existingBadges) existingBadges.remove();
+
+        if (stats.data_types && stats.data_types.length > 0) {
+            const badgeContainer = document.createElement('div');
+            badgeContainer.id = 'dataTypeBadges';
+            badgeContainer.style.display = 'flex';
+            badgeContainer.style.gap = '8px';
+            badgeContainer.style.marginTop = '8px';
+
+            const badgeColors = {
+                'biometric': '#a855f7',
+                'demographic': '#4f46e5',
+                'enrolment': '#10b981'
+            };
+
+            const badgeLabels = {
+                'biometric': 'Biometric Data',
+                'demographic': 'Demographic Data',
+                'enrolment': 'Enrolment Data'
+            };
+
+            stats.data_types.forEach(type => {
+                const badge = document.createElement('span');
+                badge.style.cssText = `
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 4px 12px;
+                    background: ${badgeColors[type]}15;
+                    color: ${badgeColors[type]};
+                    border-radius: 6px;
+                    font-size: 12px;
+                    font-weight: 600;
+                `;
+                badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${badgeLabels[type]}`;
+                badgeContainer.appendChild(badge);
+            });
+
+            headerText.appendChild(badgeContainer);
+        }
+    }
+
+    function applyConditionalVisibility(stats) {
+        // Hide Enrolment card if no enrolment data
+        const enrolmentCard = document.querySelector('.kpi-card:nth-child(1)');
+        if (stats.totalEnrolments === 0) {
+            enrolmentCard.style.display = 'none';
+        } else {
+            enrolmentCard.style.display = 'flex';
+        }
+
+        // Hide Gender Split card if no gender data
+        const genderCards = document.querySelectorAll('.glass-panel');
+        genderCards.forEach(card => {
+            const title = card.querySelector('.card-title h3');
+            if (title && title.textContent.includes('Gender Split')) {
+                if (!stats.hasGenderData ||
+                    (stats.genderCounts.Male === 0 && stats.genderCounts.Female === 0 && stats.genderCounts.Other === 0)) {
+                    card.style.display = 'none';
+                } else {
+                    card.style.display = 'block';
+                }
+            }
+        });
+
+        // Hide insight sections if no data
+        const districtScoresSection = document.getElementById('districtScores')?.parentElement;
+        if (districtScoresSection && (!stats.district_scores || Object.keys(stats.district_scores).length === 0)) {
+            districtScoresSection.style.display = 'none';
+        } else if (districtScoresSection) {
+            districtScoresSection.style.display = 'block';
+        }
+
+        const keyFindingsSection = document.getElementById('keyFindings')?.parentElement;
+        if (keyFindingsSection && (!stats.insights || !stats.insights.key_findings || stats.insights.key_findings.length === 0)) {
+            keyFindingsSection.style.display = 'none';
+        } else if (keyFindingsSection) {
+            keyFindingsSection.style.display = 'block';
+        }
+
+        const recommendationsSection = document.getElementById('recommendations')?.parentElement;
+        if (recommendationsSection && (!stats.insights || !stats.insights.recommendations || stats.insights.recommendations.length === 0)) {
+            recommendationsSection.style.display = 'none';
+        } else if (recommendationsSection) {
+            recommendationsSection.style.display = 'block';
         }
     }
 
@@ -477,7 +721,7 @@ function initUpdatesChart() {
         data: {
             labels: ['Biometric', 'Demographic'],
             datasets: [{
-                data: [65, 35],
+                data: [0, 0],
                 backgroundColor: [
                     '#a855f7',
                     '#4f46e5'
@@ -531,7 +775,7 @@ function initAgeChart() {
             labels: ['0-5', '5-18', '18-45', '45-60', '60+'],
             datasets: [{
                 label: 'Enrolments',
-                data: [120, 250, 450, 180, 90], // Demo data
+                data: [0, 0, 0, 0, 0],
                 backgroundColor: gradientFill,
                 borderColor: '#4f46e5',
                 borderWidth: 1,

@@ -57,13 +57,38 @@
             <div id="view-overview" class="view-section active">
                 <header class="top-bar">
                     <div class="header-text">
-                        <h1>Executive Overview</h1>
-                        <p>Real-time insights from uploaded dataset</p>
+                        <h1 data-i18n="executive_overview">Executive Overview</h1>
+                        <p data-i18n="real_time_insights">Real-time insights from uploaded dataset</p>
                     </div>
-                    <button id="viewFileBtn" class="btn-primary-small" style="gap: 8px;">
-                        <i class="fa-solid fa-file-csv"></i> View Source File
-                    </button>
+                    <div style="display: flex; gap: 12px;">
+                        <a href="index.html" class="btn-secondary-small" style="gap: 8px; text-decoration: none;">
+                            <i class="fa-solid fa-upload"></i>
+                            <span>Upload New Data</span>
+                        </a>
+                        <button id="langToggleBtn" class="btn-secondary-small" style="gap: 8px;">
+                            <i class="fa-solid fa-language"></i>
+                            <span id="langText">हिंदी</span>
+                        </button>
+                        <button id="viewFileBtn" class="btn-primary-small" style="gap: 8px;">
+                            <i class="fa-solid fa-file-csv"></i> 
+                            <span data-i18n="view_source">View Source File</span>
+                        </button>
+                    </div>
                 </header>
+                
+                <!-- Validation Warnings (hidden by default) -->
+                <div id="validationWarnings" style="display: none; margin-bottom: 24px;"></div>
+                
+                <!-- Executive Summary -->
+                <div class="glass-panel" style="margin-bottom: 24px; padding: 24px;">
+                    <h3 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i>
+                        <span data-i18n="executive_summary">Executive Summary</span>
+                    </h3>
+                    <p id="executiveSummary" style="color: var(--text-muted); line-height: 1.6;">
+                        Upload data to view comprehensive insights and analytics.
+                    </p>
+                </div>
 
                 <!-- Dashboard Grid -->
                 <div class="dashboard-grid">
@@ -74,18 +99,18 @@
                             <div class="icon-box blue">
                                 <i class="fa-solid fa-users"></i>
                             </div>
-                            <div class="trend up">
+                            <div class="trend up" style="display: none;">
                                 <i class="fa-solid fa-arrow-trend-up"></i>
-                                <span>12.5%</span>
+                                <span>-</span>
                             </div>
                         </div>
                         <div class="kpi-value-group">
-                            <h2 class="value">2,543,901</h2>
-                            <p class="label">Total Enrolments</p>
+                            <h2 class="value">0</h2>
+                            <p class="label" data-i18n="total_enrolments">Total Enrolments</p>
                         </div>
-                        <div class="insight-badge success">
+                        <div class="insight-badge success" style="display: none;">
                             <i class="fa-solid fa-check"></i>
-                            <span>Normal Activity</span>
+                            <span>Upload data to view insights</span>
                         </div>
                     </div>
 
@@ -95,26 +120,26 @@
                             <div class="icon-box purple">
                                 <i class="fa-solid fa-arrows-rotate"></i>
                             </div>
-                            <div class="trend down">
+                            <div class="trend down" style="display: none;">
                                 <i class="fa-solid fa-arrow-trend-down"></i>
-                                <span>3.2%</span>
+                                <span>-</span>
                             </div>
                         </div>
                         <div class="kpi-value-group">
-                            <h2 class="value">856,120</h2>
-                            <p class="label">Total Updates</p>
+                            <h2 class="value">0</h2>
+                            <p class="label" data-i18n="total_updates">Total Updates</p>
                         </div>
-                        <div class="insight-badge warning">
+                        <div class="insight-badge warning" style="display: none;">
                             <i class="fa-solid fa-triangle-exclamation"></i>
-                            <span>Slight Dip</span>
+                            <span>Upload data to view insights</span>
                         </div>
                     </div>
 
                     <!-- KPI Card 3: Updates Breakdown (Chart) -->
                     <div class="kpi-card glass-panel wide-card">
                         <div class="card-title">
-                            <h3>Update Composition</h3>
-                            <p>Demographic vs Biometric</p>
+                            <h3 data-i18n="update_composition">Update Composition</h3>
+                            <p data-i18n="demographic_vs_biometric">Demographic vs Biometric</p>
                         </div>
                         <div class="chart-container-row">
                             <div class="chart-wrapper">
@@ -124,20 +149,20 @@
                                 <div class="legend-item">
                                     <span class="dot purple"></span>
                                     <div>
-                                        <span class="l-val">65%</span>
-                                        <span class="l-lbl">Biometric</span>
+                                        <span class="l-val">0%</span>
+                                        <span class="l-lbl" data-i18n="biometric">Biometric</span>
                                     </div>
                                 </div>
                                 <div class="legend-item">
                                     <span class="dot blue"></span>
                                     <div>
-                                        <span class="l-val">35%</span>
-                                        <span class="l-lbl">Demographic</span>
+                                        <span class="l-val">0%</span>
+                                        <span class="l-lbl" data-i18n="demographic">Demographic</span>
                                     </div>
                                 </div>
-                                <div class="insight-text">
+                                <div class="insight-text" style="display: none;">
                                     <i class="fa-solid fa-circle-info"></i>
-                                    <span>High biometric updates due to mandatory renewals.</span>
+                                    <span>Upload data to view breakdown</span>
                                 </div>
                             </div>
                         </div>
@@ -146,63 +171,20 @@
                     <!-- KPI Card 4: Top Regions Activity -->
                     <div class="kpi-card glass-panel tall-card">
                         <div class="card-title">
-                            <h3>Regional Hotspots</h3>
-                            <button id="viewAllStatesBtn" class="btn-text">View All</button>
+                            <h3 data-i18n="regional_hotspots">Regional Hotspots</h3>
+                            <button id="viewAllStatesBtn" class="btn-text" data-i18n="view_all">View All</button>
                         </div>
                         <div class="region-list">
-                            <!-- Top 3 are static here, but we will have a modal for all -->
-                            <div class="region-item">
-                                <div class="rank">1</div>
-                                <div class="region-info">
-                                    <h4>Uttar Pradesh</h4>
-                                    <div class="bar-bg">
-                                        <div class="bar-fill" style="width: 85%"></div>
-                                    </div>
-                                </div>
-                                <div class="region-stats">
-                                    <span class="r-val">854k</span>
-                                    <span class="r-trend up">
-                                        <i class="fa-solid fa-arrow-up"></i> 5%
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="region-item">
-                                <div class="rank">2</div>
-                                <div class="region-info">
-                                    <h4>Maharashtra</h4>
-                                    <div class="bar-bg">
-                                        <div class="bar-fill" style="width: 72%"></div>
-                                    </div>
-                                </div>
-                                <div class="region-stats">
-                                    <span class="r-val">721k</span>
-                                    <span class="r-trend up">
-                                        <i class="fa-solid fa-arrow-up"></i> 8%
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="region-item">
-                                <div class="rank">3</div>
-                                <div class="region-info">
-                                    <h4>Bihar</h4>
-                                    <div class="bar-bg">
-                                        <div class="bar-fill" style="width: 64%"></div>
-                                    </div>
-                                </div>
-                                <div class="region-stats">
-                                    <span class="r-val">640k</span>
-                                    <span class="r-trend down">
-                                        <i class="fa-solid fa-arrow-down"></i> 2%
-                                    </span>
-                                </div>
+                            <!-- Populated dynamically from uploaded data -->
+                            <div class="empty-state" style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                                <i class="fa-solid fa-map-location-dot" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
+                                <p style="margin: 0;">Upload your CSV data to view regional analytics</p>
                             </div>
                         </div>
 
-                        <div class="anomaly-alert">
+                        <div class="anomaly-alert" style="display: none;">
                             <i class="fa-solid fa-bolt"></i>
-                            <span><strong>Anomaly:</strong> Unusual spike in MP detected yesterday.</span>
+                            <span><strong>Anomaly:</strong> Detected from your data</span>
                         </div>
                     </div>
 
@@ -211,32 +193,11 @@
                 <!-- Dashboard Grid Row 2 -->
                 <div class="dashboard-grid" style="margin-top: 24px;">
 
-                    <!-- KPI Card 5: Total Authentications -->
-                    <div class="kpi-card glass-panel clickable-card" data-modal="authModal">
-                        <div class="kpi-header">
-                            <div class="icon-box green">
-                                <i class="fa-solid fa-fingerprint"></i>
-                            </div>
-                            <div class="trend up">
-                                <i class="fa-solid fa-arrow-trend-up"></i>
-                                <span>8.4%</span>
-                            </div>
-                        </div>
-                        <div class="kpi-value-group">
-                            <h2 class="value">45.2M</h2>
-                            <p class="label">Total Authentications</p>
-                        </div>
-                        <div class="insight-badge success">
-                            <i class="fa-solid fa-shield-halved"></i>
-                            <span>High Success Rate</span>
-                        </div>
-                    </div>
-
                     <!-- Chart Card: Age Distribution -->
                     <div class="glass-panel" style="grid-column: span 2;">
                         <div class="card-title">
-                            <h3>Enrolment by Age Group</h3>
-                            <span class="tag">Demographics</span>
+                            <h3 data-i18n="enrolment_by_age">Enrolment by Age Group</h3>
+                            <span class="tag" data-i18n="demographics">Demographics</span>
                         </div>
                         <div style="height: 200px; width: 100%;">
                             <canvas id="ageChart"></canvas>
@@ -246,40 +207,82 @@
                     <!-- Gender Distribution Stats -->
                     <div class="glass-panel">
                         <div class="card-title">
-                            <h3>Gender Split</h3>
+                            <h3 data-i18n="gender_split">Gender Split</h3>
                         </div>
                         <div class="gender-stats">
                             <div class="gender-row">
                                 <div class="g-info">
-                                    <span class="g-label">Male</span>
+                                    <span class="g-label" data-i18n="male">Male</span>
                                     <div class="g-bar-bg">
-                                        <div class="g-bar-fill" style="width: 52%; background: #6366f1;"></div>
+                                        <div class="g-bar-fill" style="width: 0%; background: #6366f1;"></div>
                                     </div>
                                 </div>
-                                <span class="g-val">52%</span>
+                                <span class="g-val">0%</span>
                             </div>
                             <div class="gender-row" style="margin-top: 15px;">
                                 <div class="g-info">
-                                    <span class="g-label">Female</span>
+                                    <span class="g-label" data-i18n="female">Female</span>
                                     <div class="g-bar-bg">
-                                        <div class="g-bar-fill" style="width: 47%; background: #ec4899;"></div>
+                                        <div class="g-bar-fill" style="width: 0%; background: #ec4899;"></div>
                                     </div>
                                 </div>
-                                <span class="g-val">47%</span>
+                                <span class="g-val">0%</span>
                             </div>
                             <div class="gender-row" style="margin-top: 15px;">
                                 <div class="g-info">
-                                    <span class="g-label">Other</span>
+                                    <span class="g-label" data-i18n="other">Other</span>
                                     <div class="g-bar-bg">
-                                        <div class="g-bar-fill" style="width: 1%; background: #a855f7;"></div>
+                                        <div class="g-bar-fill" style="width: 0%; background: #a855f7;"></div>
                                     </div>
                                 </div>
-                                <span class="g-val">1%</span>
+                                <span class="g-val">0%</span>
+                                </div>
                             </div>
-                            <div class="insight-text" style="margin-top: 20px;">
-                                <i class="fa-solid fa-check"></i> Balanced ratio
+                            <div class="insight-text" style="margin-top: 20px; display: none;">
+                                <i class="fa-solid fa-check"></i> Upload data to view distribution
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- District Service Readiness Scores -->
+                    <div class="glass-panel" style="grid-column: span 2;">
+                        <div class="panel-header">
+                            <h3>
+                                <i class="fa-solid fa-ranking-star"></i>
+                                <span data-i18n="district_service_readiness">District Service Readiness</span>
+                            </h3>
+                        </div>
+                        <div id="districtScores" style="margin-top: 16px;">
+                            <p style="color: var(--text-muted); text-align: center; padding: 24px;">
+                                Upload data to view district readiness scores
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Findings -->
+                    <div class="glass-panel" style="grid-column: span 2;">
+                        <div class="panel-header">
+                            <h3>
+                                <i class="fa-solid fa-lightbulb"></i>
+                                <span data-i18n="key_findings">Key Findings</span>
+                            </h3>
+                        </div>
+                        <ul id="keyFindings" style="list-style: none; padding: 0; margin-top: 16px; color: var(--text-muted);">
+                            <li style="padding: 12px; text-align: center;">Upload data to view insights</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Recommendations -->
+                    <div class="glass-panel" style="grid-column: span 2;">
+                        <div class="panel-header">
+                            <h3>
+                                <i class="fa-solid fa-list-check"></i>
+                                <span data-i18n="recommendations">Recommendations</span>
+                            </h3>
+                        </div>
+                        <ul id="recommendations" style="list-style: none; padding: 0; margin-top: 16px; color: var(--text-muted);">
+                            <li style="padding: 12px; text-align: center;">Upload data to view recommendations</li>
+                        </ul>
                     </div>
 
                 </div>
