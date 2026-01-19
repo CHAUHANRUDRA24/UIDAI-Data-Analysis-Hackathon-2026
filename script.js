@@ -128,11 +128,37 @@ function simulateProgress(file) {
             stepInsights.classList.remove('active');
             stepInsights.classList.add('completed');
 
-            setTimeout(() => {
-                // Redirect to dashboard
-                localStorage.setItem('processedFile', file.name);
-                window.location.href = 'dashboard.html';
-            }, 1000);
+            // Read file content before redirect
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const text = e.target.result;
+                // Parse CSV
+                // Assuming simple CSV structure: State, District, Sub District, Pin Code, Gender, Age, Activity Type (Enrolment/Update), Sub Type (Demographic/Biometric), Status
+                // If simple dataset, we'll try to map it. For now, let's just save the raw rows or a structured object.
+                // We will limit to first 2000 rows to avoid localStorage quota limits.
+
+                const rows = text.split('\n').slice(0, 2000).map(row => row.split(','));
+                const headers = rows[0].map(h => h.trim().toLowerCase());
+
+                const parsedData = rows.slice(1).filter(r => r.length > 1).map(row => {
+                    let obj = {};
+                    headers.forEach((h, i) => {
+                        obj[h] = row[i]?.trim(); // handle potential missing values
+                    });
+                    return obj;
+                });
+
+                try {
+                    localStorage.setItem('processedData', JSON.stringify(parsedData));
+                    localStorage.setItem('processedFile', file.name);
+                    window.location.href = 'dashboard.html';
+                } catch (err) {
+                    console.error("Storage failed: ", err);
+                    alert("File too large for local storage demonstration. Using sample data.");
+                    window.location.href = 'dashboard.html';
+                }
+            };
+            reader.readAsText(file);
         }
 
     }, 150);
