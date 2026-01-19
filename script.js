@@ -239,7 +239,9 @@ async function handleZipFile(file) {
         // Store only aggregated stats (much smaller - no quota issues)
         localStorage.setItem('processedData', JSON.stringify(stats));
         localStorage.setItem('processedFile', file.name);
-        window.location.href = 'dashboard.html';
+        localStorage.setItem('uploadTimestamp', Date.now().toString());
+        // Force refresh by adding timestamp to URL
+        window.location.href = 'dashboard.html?t=' + Date.now();
 
     } catch (error) {
         console.error("ZIP extraction failed:", error);
@@ -316,7 +318,8 @@ function handleCSVFile(file) {
         // Store only aggregated stats - no quota issues!
         localStorage.setItem('processedData', JSON.stringify(stats));
         localStorage.setItem('processedFile', file.name);
-        window.location.href = 'dashboard.html';
+        localStorage.setItem('uploadTimestamp', Date.now().toString());
+        window.location.href = 'dashboard.html?t=' + Date.now();
     };
     reader.readAsText(file);
 }

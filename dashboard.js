@@ -3,44 +3,50 @@ document.addEventListener('DOMContentLoaded', function () {
     initUpdatesChart();
     initAgeChart();
 
-    // Check for "processed" data from upload flow (simulated)
-    // Check for "processed" data from upload flow
+    // Check for uploaded data from localStorage FIRST (highest priority)
     const storedFile = localStorage.getItem('processedFile');
     const storedDataJSON = localStorage.getItem('processedData');
 
-
-    // Check if we have pre-calculated python data (simulated check, normally fetch)
-    fetch('dashboard_data.json')
-        .then(response => {
-            if (!response.ok) throw new Error("Not found");
-            return response.json();
-        })
-        .then(data => {
-            console.log("Loaded dashboard_data.json from server");
-            updateDashboardViews(data);
-        })
-        .catch(err => console.log("No external dashboard_data.json found, using local/demo data"));
-
     if (storedFile && storedDataJSON) {
-        console.log("Loaded data for: " + storedFile);
+        console.log("Found uploaded data for: " + storedFile);
         try {
             const data = JSON.parse(storedDataJSON);
-            // Check if data is already in summary format (from Python script)
+            // Check if data is already in summary format
             if (data.totalEnrolments !== undefined && data.stateCounts !== undefined) {
-                console.log("Detected pre-calculated summary data");
+                console.log("Loading uploaded summary data");
                 updateDashboardViews(data);
+                // Clear after loading to ensure fresh data on next upload
+                // localStorage.removeItem('processedData');
+                // localStorage.removeItem('processedFile');
             } else {
-                console.log("Detected raw rows, processing...");
+                console.log("Processing uploaded raw data");
                 processRealData(data);
             }
         } catch (e) {
-            console.error("Failed to parse stored data", e);
+            console.error("Failed to parse uploaded data", e);
+            loadFallbackData();
         }
     } else {
-        console.log("No stored data found. Initializing with defaults.");
+        // No uploaded data, try to load dashboard_data.json
+        loadFallbackData();
     }
 
-    // Expose function for external calls (e.g. from file upload of JSON)
+    function loadFallbackData() {
+        fetch('dashboard_data.json')
+            .then(response => {
+                if (!response.ok) throw new Error("Not found");
+                return response.json();
+            })
+            .then(data => {
+                console.log("Loaded dashboard_data.json from server");
+                updateDashboardViews(data);
+            })
+            .catch(err => {
+                console.log("No data available. Dashboard showing empty state.");
+            });
+    }
+
+    // Expose function for external calls
     window.loadDashboardStats = function (stats) {
         updateDashboardViews(stats);
     };
