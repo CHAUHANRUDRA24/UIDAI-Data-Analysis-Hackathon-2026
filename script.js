@@ -63,8 +63,15 @@ function handleFiles(files) {
 }
 
 function validateAndPrepare(file) {
-    const validTypes = ['text/csv', 'application/zip', 'application/x-zip-compressed'];
-    // Simple verification (production should be more robust)
+    const validTypes = ['text/csv', 'application/zip', 'application/x-zip-compressed', 'application/x-zip'];
+    
+    const fileExt = file.name.split('.').pop().toLowerCase();
+    const isValid = validTypes.includes(file.type) || fileExt === 'csv' || fileExt === 'zip';
+    
+    if (!isValid) {
+        alert('Please upload a CSV or ZIP file');
+        return;
+    }
 
     // Update UI to show selected file
     dropZone.querySelector('h3').textContent = file.name;
@@ -128,40 +135,103 @@ function simulateProgress(file) {
             stepInsights.classList.remove('active');
             stepInsights.classList.add('completed');
 
-            // Read file content before redirect
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const text = e.target.result;
-                // Parse CSV
-                // Assuming simple CSV structure: State, District, Sub District, Pin Code, Gender, Age, Activity Type (Enrolment/Update), Sub Type (Demographic/Biometric), Status
-                // If simple dataset, we'll try to map it. For now, let's just save the raw rows or a structured object.
-                // We will limit to first 2000 rows to avoid localStorage quota limits.
-
-                const rows = text.split('\n').slice(0, 2000).map(row => row.split(','));
-                const headers = rows[0].map(h => h.trim().toLowerCase());
-
-                const parsedData = rows.slice(1).filter(r => r.length > 1).map(row => {
-                    let obj = {};
-                    headers.forEach((h, i) => {
-                        obj[h] = row[i]?.trim(); // handle potential missing values
-                    });
-                    return obj;
-                });
-
-                try {
-                    localStorage.setItem('processedData', JSON.stringify(parsedData));
-                    localStorage.setItem('processedFile', file.name);
-                    window.location.href = 'dashboard.html';
-                } catch (err) {
-                    console.error("Storage failed: ", err);
-                    alert("File too large for local storage demonstration. Using sample data.");
-                    window.location.href = 'dashboard.html';
-                }
-            };
-            reader.readAsText(file);
+            // Check if file is ZIP or CSV
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            
+            if (fileExt === 'zip') {
+                handleZipFile(file);
+            } else {
+                handleCSVFile(file);
+            }
         }
 
     }, 150);
+}
+
+async function handleZipFile(file) {
+    try {
+        // Load JSZip dynamically if not already loaded
+        if (typeof JSZip === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+            document.head.appendChild(script);
+            await new Promise(resolve => script.onload = resolve);
+        }
+
+        const zip = new JSZip();
+        const contents = await zip.loadAsync(file);
+        
+        let allData = [];
+        const csvFiles = Object.keys(contents.files).filter(name => 
+            name.toLowerCase().endsWith('.csv') && !name.startsWith('__MACOSX')
+        );
+
+        if (csvFiles.length === 0) {
+            alert('No CSV files found in ZIP');
+            location.reload();
+            return;
+        }
+
+        for (const filename of csvFiles) {
+            const csvText = await contents.files[filename].async('text');
+            const rows = csvText.split('\n').slice(0, 2000).map(row => row.split(','));
+            const headers = rows[0].map(h => h.trim().toLowerCase());
+
+            const parsedData = rows.slice(1).filter(r => r.length > 1).map(row => {
+                let obj = {};
+                headers.forEach((h, i) => {
+                    obj[h] = row[i]?.trim();
+                });
+                return obj;
+            });
+
+            allData = allData.concat(parsedData);
+        }
+
+        try {
+            localStorage.setItem('processedData', JSON.stringify(allData));
+            localStorage.setItem('processedFile', file.name);
+            window.location.href = 'dashboard.html';
+        } catch (err) {
+            console.error("Storage failed: ", err);
+            alert("File too large for local storage. Using sample data.");
+            window.location.href = 'dashboard.html';
+        }
+
+    } catch (error) {
+        console.error("ZIP extraction failed:", error);
+        alert("Failed to extract ZIP file. Please try again.");
+        location.reload();
+    }
+}
+
+function handleCSVFile(file) {
+    // Read file content before redirect
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const text = e.target.result;
+        const rows = text.split('\n').slice(0, 2000).map(row => row.split(','));
+        const headers = rows[0].map(h => h.trim().toLowerCase());
+
+        const parsedData = rows.slice(1).filter(r => r.length > 1).map(row => {
+            let obj = {};
+            headers.forEach((h, i) => {
+                obj[h] = row[i]?.trim();
+            });
+            return obj;
+        });
+
+        try {
+            localStorage.setItem('processedData', JSON.stringify(parsedData));
+            localStorage.setItem('processedFile', file.name);
+            window.location.href = 'dashboard.html';
+        } catch (err) {
+            console.error("Storage failed: ", err);
+            alert("File too large for local storage demonstration. Using sample data.");
+            window.location.href = 'dashboard.html';
+        }
+    };
+    reader.readAsText(file);
 }
 
 function updateStepIcon(element, iconClass, isSuccess = false) {

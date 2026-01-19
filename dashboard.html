@@ -66,7 +66,7 @@
                 <div class="dashboard-grid">
 
                     <!-- KPI Card 1: Total Enrolments -->
-                    <div class="kpi-card glass-panel">
+                    <div class="kpi-card glass-panel clickable-card" data-modal="enrolmentModal">
                         <div class="kpi-header">
                             <div class="icon-box blue">
                                 <i class="fa-solid fa-users"></i>
@@ -87,7 +87,7 @@
                     </div>
 
                     <!-- KPI Card 2: Total Updates -->
-                    <div class="kpi-card glass-panel">
+                    <div class="kpi-card glass-panel clickable-card" data-modal="updatesModal">
                         <div class="kpi-header">
                             <div class="icon-box purple">
                                 <i class="fa-solid fa-arrows-rotate"></i>
@@ -209,7 +209,7 @@
                 <div class="dashboard-grid" style="margin-top: 24px;">
 
                     <!-- KPI Card 5: Total Authentications -->
-                    <div class="kpi-card glass-panel">
+                    <div class="kpi-card glass-panel clickable-card" data-modal="authModal">
                         <div class="kpi-header">
                             <div class="icon-box green">
                                 <i class="fa-solid fa-fingerprint"></i>
@@ -371,7 +371,121 @@
         </div>
     </div>
 
-    <script src="dashboard.js?v=1.1"></script>
+    <!-- Enrolment Details Modal -->
+    <div id="enrolmentModal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-users"></i> Total Enrolments - Detailed Breakdown</h3>
+                <button class="btn-icon-small modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-stats-grid">
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Total Count</span>
+                        <span class="detail-value" id="enrolmentTotal">-</span>
+                    </div>
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Growth Rate</span>
+                        <span class="detail-value" id="enrolmentGrowth">+12.5%</span>
+                    </div>
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Daily Average</span>
+                        <span class="detail-value" id="enrolmentAvg">-</span>
+                    </div>
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Peak Day</span>
+                        <span class="detail-value">Last Monday</span>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h4>Age Group Distribution</h4>
+                    <div id="enrolmentAgeBreakdown" class="age-breakdown">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Updates Details Modal -->
+    <div id="updatesModal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-arrows-rotate"></i> Total Updates - Detailed View</h3>
+                <button class="btn-icon-small modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-stats-grid">
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Total Updates</span>
+                        <span class="detail-value" id="updatesTotal">-</span>
+                    </div>
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Biometric</span>
+                        <span class="detail-value" id="updatesBio">-</span>
+                    </div>
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Demographic</span>
+                        <span class="detail-value" id="updatesDemo">-</span>
+                    </div>
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Success Rate</span>
+                        <span class="detail-value">97.8%</span>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h4>Top Reasons for Updates</h4>
+                    <ul class="reason-list">
+                        <li>Address Change - 35%</li>
+                        <li>Biometric Renewal - 28%</li>
+                        <li>Mobile Number Update - 22%</li>
+                        <li>Photo Update - 15%</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Authentications Details Modal -->
+    <div id="authModal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-fingerprint"></i> Authentications - Detailed Analysis</h3>
+                <button class="btn-icon-small modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-stats-grid">
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Total Auth Requests</span>
+                        <span class="detail-value">45.2M</span>
+                    </div>
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Success Rate</span>
+                        <span class="detail-value">98.6%</span>
+                    </div>
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Avg Response Time</span>
+                        <span class="detail-value">1.2s</span>
+                    </div>
+                    <div class="detail-stat-item">
+                        <span class="detail-label">Failed Attempts</span>
+                        <span class="detail-value">632K</span>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h4>Authentication Methods</h4>
+                    <ul class="reason-list">
+                        <li>Fingerprint - 68%</li>
+                        <li>Iris - 22%</li>
+                        <li>OTP - 8%</li>
+                        <li>Face Recognition - 2%</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js?v=1.2"></script>
 </body>
 
 </html>

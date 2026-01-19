@@ -7,18 +7,43 @@ document.addEventListener('DOMContentLoaded', function () {
     // Check for "processed" data from upload flow
     const storedFile = localStorage.getItem('processedFile');
     const storedDataJSON = localStorage.getItem('processedData');
+    
+    
+    // Check if we have pre-calculated python data (simulated check, normally fetch)
+    fetch('dashboard_data.json')
+        .then(response => {
+            if (!response.ok) throw new Error("Not found");
+            return response.json();
+        })
+        .then(data => {
+             console.log("Loaded dashboard_data.json from server");
+             updateDashboardViews(data);
+        })
+        .catch(err => console.log("No external dashboard_data.json found, using local/demo data"));
 
     if (storedFile && storedDataJSON) {
-        console.log("Loaded real data for: " + storedFile);
+        console.log("Loaded data for: " + storedFile);
         try {
             const data = JSON.parse(storedDataJSON);
-            processRealData(data);
+            // Check if data is already in summary format (from Python script)
+            if (data.totalEnrolments !== undefined && data.stateCounts !== undefined) {
+                 console.log("Detected pre-calculated summary data");
+                 updateDashboardViews(data);
+            } else {
+                 console.log("Detected raw rows, processing...");
+                 processRealData(data);
+            }
         } catch (e) {
             console.error("Failed to parse stored data", e);
         }
     } else {
-        console.log("No real data found, using demo data.");
+        console.log("No stored data found. Initializing with defaults.");
     }
+
+    // Expose function for external calls (e.g. from file upload of JSON)
+    window.loadDashboardStats = function(stats) {
+        updateDashboardViews(stats);
+    };
 
     function processRealData(data) {
         if (!data || data.length === 0) return;
@@ -26,74 +51,114 @@ document.addEventListener('DOMContentLoaded', function () {
         // Helper to find key case-insensitive
         const getKey = (obj, keyPart) => Object.keys(obj).find(k => k.toLowerCase().includes(keyPart));
 
+        // Detect data type from first row's column structure
+        const firstRow = data[0];
+        const hasBioColumns = getKey(firstRow, 'bio_age') !== undefined;
+        const hasDemoColumns = getKey(firstRow, 'demo_age') !== undefined;
+        const hasEnrolmentColumns = getKey(firstRow, 'age_0_5') !== undefined || getKey(firstRow, 'age_5_17') !== undefined;
+
+        console.log('Data type detection:', { hasBioColumns, hasDemoColumns, hasEnrolmentColumns });
+
         // 1. Calculate KPI Counts
-        let totalEnrolments = 0;
-        let totalUpdates = 0;
-        let biometricUpdates = 0;
-        let demographicUpdates = 0;
-        let genderCounts = { Male: 0, Female: 0, Other: 0 };
-        let ageCounts = { '0-5': 0, '5-18': 0, '18-45': 0, '45-60': 0, '60+': 0 };
-        let stateCounts = {};
+        let stats = {
+            totalEnrolments: 0,
+            totalUpdates: 0,
+            biometricUpdates: 0,
+            demographicUpdates: 0,
+            genderCounts: { Male: 0, Female: 0, Other: 0 },
+            ageCounts: { '0-5': 0, '5-18': 0, '18-45': 0, '45-60': 0, '60+': 0 },
+            stateCounts: {}
+        };
 
         data.forEach(row => {
-            // Activity Type Detection (looking for 'type', 'activity', or assuming based on 'update' keyword existence)
-            const typeKey = getKey(row, 'type') || getKey(row, 'activity');
-            const typeVal = typeKey ? row[typeKey].toLowerCase() : '';
+            // Determine if this row is an update or enrolment based on column structure
+            let isBiometric = false;
+            let isDemographic = false;
+            let isEnrolment = false;
+            let rowCount = 0;
 
-            // Subtype
-            const subTypeKey = getKey(row, 'sub') || getKey(row, 'category');
-            const subTypeVal = subTypeKey ? row[subTypeKey].toLowerCase() : '';
-
-            // Logic: If explicitly "Update" or subtype has bio/demo, count as update. Else Enrolment.
-            if (typeVal.includes('update') || subTypeVal.includes('biometric') || subTypeVal.includes('demographic')) {
-                totalUpdates++;
-                if (subTypeVal.includes('biometric') || typeVal.includes('biometric')) biometricUpdates++;
-                else demographicUpdates++; // default to demographic if not bio
-            } else {
-                totalEnrolments++;
-            }
-
-            // Gender
-            const genderKey = getKey(row, 'gender') || getKey(row, 'sex');
-            if (genderKey) {
-                const g = row[genderKey].trim().toLowerCase();
-                if (g.startsWith('m')) genderCounts.Male++;
-                else if (g.startsWith('f')) genderCounts.Female++;
-                else genderCounts.Other++;
-            }
-
-            // Age
-            const ageKey = getKey(row, 'age');
-            if (ageKey) {
-                const age = parseInt(row[ageKey]);
-                if (!isNaN(age)) {
-                    if (age <= 5) ageCounts['0-5']++;
-                    else if (age <= 18) ageCounts['5-18']++;
-                    else if (age <= 45) ageCounts['18-45']++;
-                    else if (age <= 60) ageCounts['45-60']++;
-                    else ageCounts['60+']++;
+            if (hasBioColumns) {
+                // Biometric update file
+                const bio517 = getKey(row, 'bio_age_5_17');
+                const bio17plus = getKey(row, 'bio_age_17_');
+                if (bio517) rowCount += parseInt(row[bio517]) || 0;
+                if (bio17plus) rowCount += parseInt(row[bio17plus]) || 0;
+                
+                if (rowCount > 0) {
+                    stats.totalUpdates += rowCount;
+                    stats.biometricUpdates += rowCount;
+                    isBiometric = true;
+                    
+                    // Add to age counts
+                    if (bio517) stats.ageCounts['5-18'] += parseInt(row[bio517]) || 0;
+                    if (bio17plus) stats.ageCounts['18-45'] += parseInt(row[bio17plus]) || 0;
+                }
+            } else if (hasDemoColumns) {
+                // Demographic update file
+                const demo517 = getKey(row, 'demo_age_5_17');
+                const demo17plus = getKey(row, 'demo_age_17_');
+                if (demo517) rowCount += parseInt(row[demo517]) || 0;
+                if (demo17plus) rowCount += parseInt(row[demo17plus]) || 0;
+                
+                if (rowCount > 0) {
+                    stats.totalUpdates += rowCount;
+                    stats.demographicUpdates += rowCount;
+                    isDemographic = true;
+                    
+                    // Add to age counts
+                    if (demo517) stats.ageCounts['5-18'] += parseInt(row[demo517]) || 0;
+                    if (demo17plus) stats.ageCounts['18-45'] += parseInt(row[demo17plus]) || 0;
+                }
+            } else if (hasEnrolmentColumns) {
+                // Enrolment file
+                const age05 = getKey(row, 'age_0_5');
+                const age517 = getKey(row, 'age_5_17');
+                const age18plus = getKey(row, 'age_18_greater');
+                
+                if (age05) rowCount += parseInt(row[age05]) || 0;
+                if (age517) rowCount += parseInt(row[age517]) || 0;
+                if (age18plus) rowCount += parseInt(row[age18plus]) || 0;
+                
+                if (rowCount > 0) {
+                    stats.totalEnrolments += rowCount;
+                    isEnrolment = true;
+                    
+                    // Add to age counts
+                    if (age05) stats.ageCounts['0-5'] += parseInt(row[age05]) || 0;
+                    if (age517) stats.ageCounts['5-18'] += parseInt(row[age517]) || 0;
+                    if (age18plus) stats.ageCounts['18-45'] += parseInt(row[age18plus]) || 0;
                 }
             }
 
-            // State
+            // State aggregation
             const stateKey = getKey(row, 'state') || getKey(row, 'region');
-            if (stateKey) {
+            if (stateKey && rowCount > 0) {
                 const state = row[stateKey].trim();
                 if (state) {
-                    stateCounts[state] = (stateCounts[state] || 0) + 1;
+                    stats.stateCounts[state] = (stats.stateCounts[state] || 0) + rowCount;
                 }
             }
         });
 
+        console.log('Processed stats:', stats);
+        updateDashboardViews(stats);
+    }
+
+    function updateDashboardViews(stats) {
         // Update UI Elements
-        document.querySelector('.kpi-card:nth-child(1) .value').textContent = totalEnrolments.toLocaleString();
-        document.querySelector('.kpi-card:nth-child(2) .value').textContent = totalUpdates.toLocaleString();
+        document.querySelector('.kpi-card:nth-child(1) .value').textContent = stats.totalEnrolments.toLocaleString();
+        document.querySelector('.kpi-card:nth-child(2) .value').textContent = stats.totalUpdates.toLocaleString();
 
         // Update Charts
-        updateUpdatesChart(biometricUpdates, demographicUpdates);
-        updateAgeChart(ageCounts);
-        updateGenderStats(genderCounts);
-        updateStateStats(stateCounts);
+        updateUpdatesChart(stats.biometricUpdates, stats.demographicUpdates);
+        updateAgeChart(stats.ageCounts);
+        updateGenderStats(stats.genderCounts);
+        updateStateStats(stats.stateCounts);
+        
+        // Update modal data if function exists
+        if (window.updateModalData) {
+            window.updateModalData(stats);
+        }
     }
 
     function updateUpdatesChart(bioBytes, demoBytes) {
@@ -305,6 +370,89 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         console.error("View All States elements NOT found:", { viewAllBtn, modal, closeBtn });
     }
+
+    // Clickable Cards Modal Handlers
+    const clickableCards = document.querySelectorAll('.clickable-card');
+    clickableCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const modalId = card.getAttribute('data-modal');
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('show'), 10);
+            }
+        });
+    });
+
+    // Close buttons for all modals
+    const allCloseButtons = document.querySelectorAll('.modal-close, #closeModalBtn');
+    allCloseButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const modal = e.target.closest('.modal-overlay');
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        });
+    });
+
+    // Close modal on overlay click
+    const allModals = document.querySelectorAll('.modal-overlay');
+    allModals.forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('show');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        });
+    });
+
+    // Store current stats globally for modal access
+    window.currentStats = null;
+    
+    // Update modal data function
+    window.updateModalData = function(stats) {
+        if (!stats) return;
+        window.currentStats = stats;
+        
+        // Enrolment Modal
+        const enrolmentTotal = document.getElementById('enrolmentTotal');
+        if (enrolmentTotal) {
+            enrolmentTotal.textContent = stats.totalEnrolments.toLocaleString();
+        }
+        
+        const enrolmentAvg = document.getElementById('enrolmentAvg');
+        if (enrolmentAvg) {
+            enrolmentAvg.textContent = Math.round(stats.totalEnrolments / 30).toLocaleString() + '/day';
+        }
+
+        // Age breakdown
+        const ageBreakdown = document.getElementById('enrolmentAgeBreakdown');
+        if (ageBreakdown && stats.ageCounts) {
+            ageBreakdown.innerHTML = Object.entries(stats.ageCounts).map(([age, count]) => `
+                <div class="age-breakdown-item">
+                    <span>${age} years</span>
+                    <strong>${count.toLocaleString()}</strong>
+                </div>
+            `).join('');
+        }
+        
+        // Updates Modal
+        const updatesTotal = document.getElementById('updatesTotal');
+        if (updatesTotal) {
+            updatesTotal.textContent = stats.totalUpdates.toLocaleString();
+        }
+        
+        const updatesBio = document.getElementById('updatesBio');
+        if (updatesBio) {
+            updatesBio.textContent = stats.biometricUpdates.toLocaleString();
+        }
+        
+        const updatesDemo = document.getElementById('updatesDemo');
+        if (updatesDemo) {
+            updatesDemo.textContent = stats.demographicUpdates.toLocaleString();
+        }
+    };
 });
 
 function initUpdatesChart() {
