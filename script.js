@@ -161,7 +161,6 @@ async function handleZipFile(file) {
         const zip = new JSZip();
         const contents = await zip.loadAsync(file);
 
-        let allData = [];
         const csvFiles = Object.keys(contents.files).filter(name =>
             name.toLowerCase().endsWith('.csv') && !name.startsWith('__MACOSX')
         );
@@ -172,69 +171,152 @@ async function handleZipFile(file) {
             return;
         }
 
+        // Process and aggregate stats instead of storing all rows
+        let stats = {
+            totalEnrolments: 0,
+            totalUpdates: 0,
+            biometricUpdates: 0,
+            demographicUpdates: 0,
+            genderCounts: { Male: 0, Female: 0, Other: 0 },
+            ageCounts: { '0-5': 0, '5-18': 0, '18-45': 0, '45-60': 0, '60+': 0 },
+            stateCounts: {}
+        };
+
         for (const filename of csvFiles) {
             const csvText = await contents.files[filename].async('text');
-            const rows = csvText.split('\n').slice(0, 2000).map(row => row.split(','));
+            const rows = csvText.split('\n').map(row => row.split(','));
             const headers = rows[0].map(h => h.trim().toLowerCase());
 
-            const parsedData = rows.slice(1).filter(r => r.length > 1).map(row => {
-                let obj = {};
-                headers.forEach((h, i) => {
-                    obj[h] = row[i]?.trim();
+            const hasBio = headers.some(h => h.includes('bio_age'));
+            const hasDemo = headers.some(h => h.includes('demo_age'));
+            const hasEnrol = headers.some(h => h.includes('age_0_5') || h.includes('age_5_17'));
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (row.length <= 1) continue;
+
+                let rowData = {};
+                headers.forEach((h, idx) => {
+                    rowData[h] = row[idx]?.trim();
                 });
-                return obj;
-            });
 
-            allData = allData.concat(parsedData);
+                let count = 0;
+
+                if (hasBio) {
+                    const bio517 = parseInt(rowData['bio_age_5_17']) || 0;
+                    const bio17 = parseInt(rowData['bio_age_17_']) || 0;
+                    count = bio517 + bio17;
+                    stats.totalUpdates += count;
+                    stats.biometricUpdates += count;
+                    stats.ageCounts['5-18'] += bio517;
+                    stats.ageCounts['18-45'] += bio17;
+                } else if (hasDemo) {
+                    const demo517 = parseInt(rowData['demo_age_5_17']) || 0;
+                    const demo17 = parseInt(rowData['demo_age_17_']) || 0;
+                    count = demo517 + demo17;
+                    stats.totalUpdates += count;
+                    stats.demographicUpdates += count;
+                    stats.ageCounts['5-18'] += demo517;
+                    stats.ageCounts['18-45'] += demo17;
+                } else if (hasEnrol) {
+                    const age05 = parseInt(rowData['age_0_5']) || 0;
+                    const age517 = parseInt(rowData['age_5_17']) || 0;
+                    const age18 = parseInt(rowData['age_18_greater']) || 0;
+                    count = age05 + age517 + age18;
+                    stats.totalEnrolments += count;
+                    stats.ageCounts['0-5'] += age05;
+                    stats.ageCounts['5-18'] += age517;
+                    stats.ageCounts['18-45'] += age18;
+                }
+
+                const state = rowData['state'];
+                if (state && count > 0) {
+                    stats.stateCounts[state] = (stats.stateCounts[state] || 0) + count;
+                }
+            }
         }
 
-        try {
-            localStorage.setItem('processedData', JSON.stringify(allData));
-            localStorage.setItem('processedFile', file.name);
-            window.location.href = 'dashboard.html';
-        } catch (err) {
-            console.error("Storage failed: ", err);
-            alert("File too large for local storage. Using sample data.");
-            window.location.href = 'dashboard.html';
-        }
+        // Store only aggregated stats (much smaller - no quota issues)
+        localStorage.setItem('processedData', JSON.stringify(stats));
+        localStorage.setItem('processedFile', file.name);
+        window.location.href = 'dashboard.html';
 
     } catch (error) {
         console.error("ZIP extraction failed:", error);
-        alert("Failed to extract ZIP file. Please try again.");
+        alert("Failed to extract ZIP file: " + error.message);
         location.reload();
     }
 }
 
 function handleCSVFile(file) {
-    // Read file content before redirect
     const reader = new FileReader();
     reader.onload = function (e) {
         const text = e.target.result;
-        // removed slice limit
         const rows = text.split('\n').map(row => row.split(','));
         const headers = rows[0].map(h => h.trim().toLowerCase());
 
-        const parsedData = rows.slice(1).filter(r => r.length > 1).map(row => {
-            let obj = {};
-            headers.forEach((h, i) => {
-                obj[h] = row[i]?.trim();
-            });
-            return obj;
-        });
+        const hasBio = headers.some(h => h.includes('bio_age'));
+        const hasDemo = headers.some(h => h.includes('demo_age'));
+        const hasEnrol = headers.some(h => h.includes('age_0_5') || h.includes('age_5_17'));
 
-        try {
-            localStorage.setItem('processedData', JSON.stringify(parsedData));
-            localStorage.setItem('processedFile', file.name);
-            window.location.href = 'dashboard.html';
-        } catch (err) {
-            console.error("Storage failed: ", err);
-            if (err.name === 'QuotaExceededError') {
-                alert("File is too large for browser storage. Please use the Python backend option for large datasets, or try a smaller file.");
-                window.location.href = 'dashboard.html?error=quota';
-            } else {
-                alert("Error processing file: " + err.message);
+        let stats = {
+            totalEnrolments: 0,
+            totalUpdates: 0,
+            biometricUpdates: 0,
+            demographicUpdates: 0,
+            genderCounts: { Male: 0, Female: 0, Other: 0 },
+            ageCounts: { '0-5': 0, '5-18': 0, '18-45': 0, '45-60': 0, '60+': 0 },
+            stateCounts: {}
+        };
+
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (row.length <= 1) continue;
+
+            let rowData = {};
+            headers.forEach((h, idx) => {
+                rowData[h] = row[idx]?.trim();
+            });
+
+            let count = 0;
+
+            if (hasBio) {
+                const bio517 = parseInt(rowData['bio_age_5_17']) || 0;
+                const bio17 = parseInt(rowData['bio_age_17_']) || 0;
+                count = bio517 + bio17;
+                stats.totalUpdates += count;
+                stats.biometricUpdates += count;
+                stats.ageCounts['5-18'] += bio517;
+                stats.ageCounts['18-45'] += bio17;
+            } else if (hasDemo) {
+                const demo517 = parseInt(rowData['demo_age_5_17']) || 0;
+                const demo17 = parseInt(rowData['demo_age_17_']) || 0;
+                count = demo517 + demo17;
+                stats.totalUpdates += count;
+                stats.demographicUpdates += count;
+                stats.ageCounts['5-18'] += demo517;
+                stats.ageCounts['18-45'] += demo17;
+            } else if (hasEnrol) {
+                const age05 = parseInt(rowData['age_0_5']) || 0;
+                const age517 = parseInt(rowData['age_5_17']) || 0;
+                const age18 = parseInt(rowData['age_18_greater']) || 0;
+                count = age05 + age517 + age18;
+                stats.totalEnrolments += count;
+                stats.ageCounts['0-5'] += age05;
+                stats.ageCounts['5-18'] += age517;
+                stats.ageCounts['18-45'] += age18;
+            }
+
+            const state = rowData['state'];
+            if (state && count > 0) {
+                stats.stateCounts[state] = (stats.stateCounts[state] || 0) + count;
             }
         }
+
+        // Store only aggregated stats - no quota issues!
+        localStorage.setItem('processedData', JSON.stringify(stats));
+        localStorage.setItem('processedFile', file.name);
+        window.location.href = 'dashboard.html';
     };
     reader.readAsText(file);
 }
