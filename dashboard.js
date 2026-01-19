@@ -1,7 +1,51 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Bilingual Support Logic
+    let currentLang = 'en';
+    let translations = {};
+
+    async function loadTranslations() {
+        try {
+            const response = await fetch('translations.json');
+            translations = await response.json();
+            console.log("Translations loaded");
+            updatePageLanguage();
+        } catch (e) {
+            console.error("Failed to load translations", e);
+        }
+    }
+
+    // MANDATORY FALLBACK LOGIC
+    function getText(key) {
+        return translations[currentLang]?.[key] 
+            || translations['en']?.[key] 
+            || key;
+    }
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        updatePageLanguage();
+    }
+
+    function updatePageLanguage() {
+        const elements = document.querySelectorAll('[data-i18n]');
+        elements.forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            el.textContent = getText(key);
+        });
+        
+        // Expose to global for chart updates
+        window.getText = getText;
+        if (typeof window.initialData !== 'undefined') {
+            updateDashboardViews(window.initialData);
+        }
+    }
+
     // Initialize Charts
     initUpdatesChart();
     initAgeChart();
+    
+    // Load translations
+    loadTranslations();
 
     // Check for uploaded data from localStorage FIRST (highest priority)
     const storedFile = localStorage.getItem('processedFile');
@@ -29,6 +73,17 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         // No uploaded data, try to load dashboard_data.json
         loadFallbackData();
+    }
+    
+    // Language Toggle Button
+    const langToggleBtn = document.getElementById('langToggleBtn');
+    const langText = document.getElementById('langText');
+    if (langToggleBtn) {
+        langToggleBtn.addEventListener('click', () => {
+            currentLang = currentLang === 'en' ? 'hi' : 'en';
+            langText.textContent = currentLang === 'en' ? 'हिंदी' : 'English';
+            updatePageLanguage();
+        });
     }
 
     function loadFallbackData() {
@@ -160,11 +215,84 @@ document.addEventListener('DOMContentLoaded', function () {
         updateAgeChart(stats.ageCounts);
         updateGenderStats(stats.genderCounts);
         updateStateStats(stats.stateCounts);
+        
+        // Update Insights if available
+        if (stats.insights) {
+            updateInsights(stats.insights);
+        }
+        
+        // Update District Scores if available
+        if (stats.district_scores) {
+            updateDistrictScores(stats.district_scores);
+        }
+        
+        // Show validation status if available
+        if (stats.validation && stats.validation.status !== 'PASS') {
+            showValidationWarnings(stats.validation);
+        }
 
         // Update modal data if function exists
         if (window.updateModalData) {
             window.updateModalData(stats);
         }
+        
+        // Store for language updates
+        window.initialData = stats;
+    }
+    
+    function updateInsights(insights) {
+        // Display executive summary
+        const summaryEl = document.getElementById('executiveSummary');
+        if (summaryEl && insights.executive_summary) {
+            summaryEl.textContent = insights.executive_summary;
+        }
+        
+        // Display key findings
+        const findingsEl = document.getElementById('keyFindings');
+        if (findingsEl && insights.key_findings && insights.key_findings.length > 0) {
+            findingsEl.innerHTML = insights.key_findings.map(finding => 
+                `<li><i class="fa-solid fa-lightbulb"></i> ${finding}</li>`
+            ).join('');
+        }
+        
+        // Display recommendations
+        const recsEl = document.getElementById('recommendations');
+        if (recsEl && insights.recommendations && insights.recommendations.length > 0) {
+            recsEl.innerHTML = insights.recommendations.map(rec => 
+                `<li><i class="fa-solid fa-arrow-right"></i> ${rec}</li>`
+            ).join('');
+        }
+    }
+    
+    function updateDistrictScores(scores) {
+        const scoresEl = document.getElementById('districtScores');
+        if (!scoresEl) return;
+        
+        const top5 = Object.entries(scores).slice(0, 5);
+        scoresEl.innerHTML = top5.map(([district, score], idx) => `
+            <div class="score-item">
+                <div class="score-rank">${idx + 1}</div>
+                <div class="score-name">${district}</div>
+                <div class="score-value ${score >= 70 ? 'high' : score >= 40 ? 'medium' : 'low'}">
+                    ${score}
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function showValidationWarnings(validation) {
+        const warningEl = document.getElementById('validationWarnings');
+        if (!warningEl) return;
+        
+        warningEl.style.display = 'block';
+        warningEl.innerHTML = `
+            <div class="alert alert-${validation.status === 'FAIL' ? 'danger' : 'warning'}">
+                <strong>Validation Status: ${validation.status}</strong>
+                <ul>
+                    ${validation.issues.map(issue => `<li>${issue}</li>`).join('')}
+                </ul>
+            </div>
+        `;
     }
 
     function updateUpdatesChart(bioBytes, demoBytes) {

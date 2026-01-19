@@ -57,13 +57,34 @@
             <div id="view-overview" class="view-section active">
                 <header class="top-bar">
                     <div class="header-text">
-                        <h1>Executive Overview</h1>
-                        <p>Real-time insights from uploaded dataset</p>
+                        <h1 data-i18n="executive_overview">Executive Overview</h1>
+                        <p data-i18n="real_time_insights">Real-time insights from uploaded dataset</p>
                     </div>
-                    <button id="viewFileBtn" class="btn-primary-small" style="gap: 8px;">
-                        <i class="fa-solid fa-file-csv"></i> View Source File
-                    </button>
+                    <div style="display: flex; gap: 12px;">
+                        <button id="langToggleBtn" class="btn-secondary-small" style="gap: 8px;">
+                            <i class="fa-solid fa-language"></i>
+                            <span id="langText">हिंदी</span>
+                        </button>
+                        <button id="viewFileBtn" class="btn-primary-small" style="gap: 8px;">
+                            <i class="fa-solid fa-file-csv"></i> 
+                            <span data-i18n="view_source">View Source File</span>
+                        </button>
+                    </div>
                 </header>
+                
+                <!-- Validation Warnings (hidden by default) -->
+                <div id="validationWarnings" style="display: none; margin-bottom: 24px;"></div>
+                
+                <!-- Executive Summary -->
+                <div class="glass-panel" style="margin-bottom: 24px; padding: 24px;">
+                    <h3 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i>
+                        <span data-i18n="executive_summary">Executive Summary</span>
+                    </h3>
+                    <p id="executiveSummary" style="color: var(--text-muted); line-height: 1.6;">
+                        Upload data to view comprehensive insights and analytics.
+                    </p>
+                </div>
 
                 <!-- Dashboard Grid -->
                 <div class="dashboard-grid">
@@ -232,11 +253,53 @@
                                     </div>
                                 </div>
                                 <span class="g-val">0%</span>
+                                </div>
                             </div>
                             <div class="insight-text" style="margin-top: 20px; display: none;">
                                 <i class="fa-solid fa-check"></i> Upload data to view distribution
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- District Service Readiness Scores -->
+                    <div class="glass-panel" style="grid-column: span 2;">
+                        <div class="panel-header">
+                            <h3>
+                                <i class="fa-solid fa-ranking-star"></i>
+                                <span data-i18n="district_service_readiness">District Service Readiness</span>
+                            </h3>
+                        </div>
+                        <div id="districtScores" style="margin-top: 16px;">
+                            <p style="color: var(--text-muted); text-align: center; padding: 24px;">
+                                Upload data to view district readiness scores
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Findings -->
+                    <div class="glass-panel" style="grid-column: span 2;">
+                        <div class="panel-header">
+                            <h3>
+                                <i class="fa-solid fa-lightbulb"></i>
+                                <span data-i18n="key_findings">Key Findings</span>
+                            </h3>
+                        </div>
+                        <ul id="keyFindings" style="list-style: none; padding: 0; margin-top: 16px; color: var(--text-muted);">
+                            <li style="padding: 12px; text-align: center;">Upload data to view insights</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Recommendations -->
+                    <div class="glass-panel" style="grid-column: span 2;">
+                        <div class="panel-header">
+                            <h3>
+                                <i class="fa-solid fa-list-check"></i>
+                                <span data-i18n="recommendations">Recommendations</span>
+                            </h3>
+                        </div>
+                        <ul id="recommendations" style="list-style: none; padding: 0; margin-top: 16px; color: var(--text-muted);">
+                            <li style="padding: 12px; text-align: center;">Upload data to view recommendations</li>
+                        </ul>
                     </div>
 
                 </div>
