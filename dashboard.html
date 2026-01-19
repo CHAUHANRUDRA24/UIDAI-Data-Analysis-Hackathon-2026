@@ -312,16 +312,184 @@
                         <h1>Geospatial Map</h1>
                         <p>Geographic distribution of enrolments</p>
                     </div>
+                    <div class="geo-breadcrumb" id="geoBreadcrumb">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span id="breadcrumbText">India</span>
+                        <button id="backToIndia" class="btn-text" style="display: none;">
+                            <i class="fa-solid fa-arrow-left"></i> Back to India
+                        </button>
+                    </div>
                 </header>
-                <div class="dashboard-grid">
-                    <div class="glass-panel"
-                        style="grid-column: span 4; display: flex; align-items: center; justify-content: center; height: 600px; flex-direction: column; gap: 20px;">
-                        <div class="icon-box purple" style="width: 80px; height: 80px; font-size: 32px;">
-                            <i class="fa-solid fa-map-location-dot"></i>
+
+                <!-- Map Controls Panel -->
+                <div class="geo-controls-panel glass-panel">
+                    <div class="control-group">
+                        <label class="control-label">
+                            <i class="fa-solid fa-layer-group"></i> Visualization Type
+                        </label>
+                        <div class="layer-toggle-group">
+                            <button class="layer-btn active" data-layer="heatmap">
+                                <i class="fa-solid fa-fire"></i>
+                                <span>Heatmap</span>
+                            </button>
+                            <button class="layer-btn" data-layer="bubble">
+                                <i class="fa-solid fa-circle-dot"></i>
+                                <span>Bubble Map</span>
+                            </button>
+                            <button class="layer-btn" data-layer="choropleth">
+                                <i class="fa-solid fa-map"></i>
+                                <span>Choropleth</span>
+                            </button>
                         </div>
-                        <h2 style="color: var(--text-muted);">Interactive Map Placeholder</h2>
-                        <p style="color: var(--text-muted);">India map with state-wise density heatmaps will be rendered
-                            here.</p>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            <i class="fa-solid fa-chart-bar"></i> Metric
+                        </label>
+                        <select id="metricSelector" class="metric-select">
+                            <option value="total">Total Enrolments</option>
+                            <option value="updates">Biometric Updates</option>
+                            <option value="density">Population Density</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            <i class="fa-solid fa-users-viewfinder"></i> Demographics
+                        </label>
+                        <select id="demographicSelector" class="metric-select">
+                            <option value="all">All Ages</option>
+                            <option value="0-5">Children (0-5 yrs)</option>
+                            <option value="5-18">School Age (5-18 yrs)</option>
+                            <option value="18+">Adults (18+ yrs)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group" style="display: flex; align-items: center; justify-self: end;">
+                        <label class="checkbox-container"
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-secondary); font-size: 13px; font-weight: 500;">
+                            <input type="checkbox" id="infrastructureToggle" style="accent-color: var(--primary);">
+                            <span><i class="fa-solid fa-map-pin" style="color: var(--danger); margin-right: 4px;"></i>
+                                Show Service Centers</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Map Container -->
+                <div class="dashboard-grid" style="margin-top: 16px;">
+                    <div class="glass-panel" style="grid-column: span 3; min-height: 600px; position: relative;">
+                        <div id="mapCanvas" class="map-canvas">
+                            <!-- SVG Map will be rendered here -->
+                            <svg id="indiaMap" width="100%" height="600" viewBox="0 0 800 900">
+                                <!-- Map paths will be dynamically generated -->
+                            </svg>
+
+                            <!-- Loading State -->
+                            <div id="mapLoading" class="map-loading">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                <p>Loading map data...</p>
+                            </div>
+                        </div>
+
+                        <!-- Map Legend -->
+                        <div class="map-legend" id="mapLegend">
+                            <div class="legend-title">Enrolment Density</div>
+                            <div class="legend-gradient">
+                                <div class="gradient-bar"></div>
+                                <div class="legend-labels">
+                                    <span>Low</span>
+                                    <span>Medium</span>
+                                    <span>High</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Panel -->
+                    <div class="glass-panel" style="grid-column: span 1;">
+                        <div class="card-title">
+                            <h3>Regional Statistics</h3>
+                            <span class="tag" id="regionTag">National</span>
+                        </div>
+
+                        <div class="geo-stats-container">
+                            <div class="geo-stat-card">
+                                <div class="stat-icon blue">
+                                    <i class="fa-solid fa-users"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <span class="stat-label">Total Enrolments</span>
+                                    <span class="stat-value" id="geoTotalEnrol">-</span>
+                                </div>
+                            </div>
+
+                            <div class="geo-stat-card">
+                                <div class="stat-icon purple">
+                                    <i class="fa-solid fa-map-pin"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <span class="stat-label">Active Regions</span>
+                                    <span class="stat-value" id="geoActiveRegions">-</span>
+                                </div>
+                            </div>
+
+                            <div class="geo-stat-card">
+                                <div class="stat-icon green">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <span class="stat-label">Avg. per Region</span>
+                                    <span class="stat-value" id="geoAvgEnrol">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Regions List -->
+                        <div class="top-regions-list" id="topRegionsList">
+                            <h4 style="margin-bottom: 12px; font-size: 14px; color: var(--text-secondary);">Top Regions
+                            </h4>
+                            <div id="topRegionsContent">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Time Slider Panel -->
+                <div class="glass-panel time-slider-panel">
+                    <div class="time-slider-header">
+                        <div class="slider-title">
+                            <i class="fa-solid fa-clock"></i>
+                            <span>Temporal Analysis</span>
+                        </div>
+                        <div class="time-display">
+                            <span id="currentTimeDisplay">January 2026</span>
+                        </div>
+                        <div class="playback-controls">
+                            <button id="playBtn" class="control-btn">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                            <button id="pauseBtn" class="control-btn" style="display: none;">
+                                <i class="fa-solid fa-pause"></i>
+                            </button>
+                            <button id="resetBtn" class="control-btn">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="slider-container">
+                        <input type="range" id="timeSlider" class="time-slider" min="0" max="11" value="0" step="1">
+                        <div class="slider-marks" id="sliderMarks">
+                            <!-- Time markers will be generated here -->
+                        </div>
+                    </div>
+
+                    <div class="time-range-selector">
+                        <button class="range-btn active" data-range="monthly">Monthly</button>
+                        <button class="range-btn" data-range="quarterly">Quarterly</button>
+                        <button class="range-btn" data-range="yearly">Yearly</button>
                     </div>
                 </div>
             </div>
@@ -513,6 +681,7 @@
     </div>
 
     <script src="dashboard.js?v=1.2"></script>
+    <script src="geospatial.js"></script>
 </body>
 
 </html>

@@ -10,16 +10,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // Check if we have pre-calculated python data (simulated check, normally fetch)
-    fetch('dashboard_data.json')
-        .then(response => {
-            if (!response.ok) throw new Error("Not found");
-            return response.json();
-        })
-        .then(data => {
-            console.log("Loaded dashboard_data.json from server");
-            updateDashboardViews(data);
-        })
-        .catch(err => console.log("No external dashboard_data.json found, using local/demo data"));
+    // ONLY fetch if we don't have local session data from an upload
+    if (!storedDataJSON) {
+        fetch('dashboard_data.json')
+            .then(response => {
+                if (!response.ok) throw new Error("Not found");
+                return response.json();
+            })
+            .then(data => {
+                console.log("Loaded dashboard_data.json from server");
+                updateDashboardViews(data);
+            })
+            .catch(err => console.log("No external dashboard_data.json found, using local/demo data"));
+    } else {
+        console.log("Skipping server data fetch in favor of local session data");
+    }
 
     if (storedFile && storedDataJSON) {
         console.log("Loaded data for: " + storedFile);

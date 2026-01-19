@@ -25,6 +25,12 @@ The system recognizes three specific CSV formats:
 - **State-wise Analytics**: View all states with rankings and trends
 - **Dynamic Charts**: Real-time Chart.js visualizations
 - **Responsive Design**: Works seamlessly on all screen sizes
+- **🗺️ Advanced Geospatial Visualization**:
+  - **Drill-down Capability**: Click states to view district-level data
+  - **Time-Slider**: Visualize changes over weeks, months, or years with playback controls
+  - **Toggle Layers**: Switch between Heatmap, Bubble Map, and Choropleth views
+  - **Interactive Controls**: Real-time metric selection and regional statistics
+  - See [GEOSPATIAL_FEATURES.md](GEOSPATIAL_FEATURES.md) for detailed documentation
 
 ## Installation & Setup
 

@@ -13,7 +13,8 @@ class UIDAIProcessor:
             "demographicUpdates": 0,
             "genderCounts": {"Male": 0, "Female": 0, "Other": 0},
             "ageCounts": {"0-5": 0, "5-18": 0, "18-45": 0, "45-60": 0, "60+": 0},
-            "stateCounts": {}
+            "stateCounts": {},
+            "districtCounts": {}
         }
 
     def detect_file_type(self, df: pd.DataFrame) -> str:
@@ -48,12 +49,20 @@ class UIDAIProcessor:
         except Exception as e:
             print(f"Error processing {file_path}: {str(e)}")
 
-    def _update_state_counts(self, df, count_col):
+    def _update_counts(self, df, count_col):
         # Group by state and sum the count column
         if 'state' in df.columns:
             state_sums = df.groupby('state')[count_col].sum()
             for state, count in state_sums.items():
                 self.summary['stateCounts'][state] = self.summary['stateCounts'].get(state, 0) + int(count)
+                
+        # Group by state and district for district counts
+        if 'state' in df.columns and 'district' in df.columns:
+            district_sums = df.groupby(['state', 'district'])[count_col].sum()
+            for (state, district), count in district_sums.items():
+                if state not in self.summary['districtCounts']:
+                    self.summary['districtCounts'][state] = {}
+                self.summary['districtCounts'][state][district] = self.summary['districtCounts'][state].get(district, 0) + int(count)
 
     def _process_biometric(self, df):
         # Columns: bio_age_5_17, bio_age_17_
@@ -72,10 +81,9 @@ class UIDAIProcessor:
         self.summary['ageCounts']['5-18'] += int(c1)
         self.summary['ageCounts']['18-45'] += int(c2) # Mapping 17+ to 18-45 bucket for now
 
-        # Update State Counts
-        # We need to sum both columns for state stats
+        # Update State and District Counts
         df['total_row'] = df['bio_age_5_17'] + df['bio_age_17_']
-        self._update_state_counts(df, 'total_row')
+        self._update_counts(df, 'total_row')
 
     def _process_demographic(self, df):
         # Columns: demo_age_5_17, demo_age_17_
@@ -93,7 +101,7 @@ class UIDAIProcessor:
         self.summary['ageCounts']['18-45'] += int(c2)
 
         df['total_row'] = df['demo_age_5_17'] + df['demo_age_17_']
-        self._update_state_counts(df, 'total_row')
+        self._update_counts(df, 'total_row')
 
     def _process_enrolment(self, df):
         # Columns: age_0_5, age_5_17, age_18_greater
@@ -112,7 +120,7 @@ class UIDAIProcessor:
         self.summary['ageCounts']['18-45'] += int(c3)
 
         df['total_row'] = df['age_0_5'] + df['age_5_17'] + df['age_18_greater']
-        self._update_state_counts(df, 'total_row')
+        self._update_counts(df, 'total_row')
 
     def save_output(self, output_path='dashboard_data.json'):
         with open(output_path, 'w') as f:

@@ -515,6 +515,11 @@ body {
     color: var(--text-main);
 }
 
+.map-canvas svg {
+    width: 100%;
+    height: 100%;
+}
+
 /* Modal Styles */
 .modal-overlay {
     position: fixed;
@@ -746,4 +751,567 @@ body {
     background: var(--primary-hover);
     transform: translateY(-1px);
     box-shadow: 0 6px 10px -1px rgba(79, 70, 229, 0.3);
+}
+
+/* ========================================
+   GEOSPATIAL VISUALIZATION STYLES
+   ======================================== */
+
+/* Breadcrumb Navigation */
+.geo-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: rgba(79, 70, 229, 0.05);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.geo-breadcrumb i {
+    color: var(--primary);
+}
+
+#breadcrumbText {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+/* Controls Panel */
+.geo-controls-panel {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+    padding: 20px 24px;
+    margin-bottom: 0;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.control-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.control-label i {
+    color: var(--primary);
+}
+
+/* Layer Toggle Buttons */
+.layer-toggle-group {
+    display: flex;
+    gap: 8px;
+}
+
+.layer-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 2px solid var(--border);
+    background: white;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.layer-btn i {
+    font-size: 16px;
+}
+
+.layer-btn:hover {
+    border-color: var(--primary);
+    background: rgba(79, 70, 229, 0.05);
+    color: var(--primary);
+}
+
+.layer-btn.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.layer-btn.active i {
+    color: white;
+}
+
+/* Metric Selector */
+.metric-select {
+    padding: 10px 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-main);
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 200px;
+}
+
+.metric-select:hover {
+    border-color: var(--primary);
+}
+
+.metric-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Map Canvas */
+.map-canvas {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#indiaMap {
+    display: block;
+    margin: 0 auto;
+}
+
+/* SVG Map Styles */
+#indiaMap path {
+    fill: #cbd5e1;
+    stroke: white;
+    stroke-width: 2;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#indiaMap path:hover {
+    fill: var(--primary);
+    stroke: #4338ca;
+    stroke-width: 3;
+    filter: drop-shadow(0 4px 8px rgba(79, 70, 229, 0.4));
+}
+
+#indiaMap path.selected {
+    fill: var(--primary);
+    stroke: #4338ca;
+    stroke-width: 3;
+}
+
+/* Bubble Map Styles */
+#indiaMap circle.bubble {
+    fill: var(--primary);
+    fill-opacity: 0.6;
+    stroke: var(--primary);
+    stroke-width: 2;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#indiaMap circle.bubble:hover {
+    fill-opacity: 0.9;
+    stroke-width: 3;
+    filter: drop-shadow(0 4px 8px rgba(79, 70, 229, 0.5));
+}
+
+/* Map Loading State */
+.map-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.map-loading i {
+    font-size: 48px;
+    color: var(--primary);
+    margin-bottom: 16px;
+}
+
+.map-loading p {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.map-loading.hidden {
+    display: none;
+}
+
+/* Map Legend */
+.map-legend {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+}
+
+.legend-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 12px;
+}
+
+.legend-gradient {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gradient-bar {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg,
+            #e0e7ff 0%,
+            #a5b4fc 33%,
+            #6366f1 66%,
+            #4338ca 100%);
+}
+
+.legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Regional Stats Container */
+.geo-stats-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.geo-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.geo-stat-card:hover {
+    background: #f1f5f9;
+    transform: translateX(4px);
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    font-family: var(--font-heading);
+}
+
+/* Top Regions List */
+.top-regions-list {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+}
+
+#topRegionsContent {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.top-region-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    font-size: 13px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.top-region-item:hover {
+    background: rgba(79, 70, 229, 0.05);
+    transform: translateX(4px);
+}
+
+.top-region-name {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.top-region-value {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* ========================================
+   TIME SLIDER PANEL
+   ======================================== */
+
+.time-slider-panel {
+    margin-top: 24px;
+    padding: 24px;
+}
+
+.time-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.slider-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.slider-title i {
+    color: var(--primary);
+    font-size: 18px;
+}
+
+.time-display {
+    padding: 8px 16px;
+    background: rgba(79, 70, 229, 0.1);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.playback-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.control-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    background: white;
+    color: var(--primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.control-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+/* Slider Container */
+.slider-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.time-slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg,
+            rgba(79, 70, 229, 0.2) 0%,
+            rgba(79, 70, 229, 0.4) 100%);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.time-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+    transition: all 0.2s;
+}
+
+.time-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.6);
+}
+
+.time-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+    transition: all 0.2s;
+}
+
+.time-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.6);
+}
+
+/* Slider Marks */
+.slider-marks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding: 0 10px;
+}
+
+.slider-mark {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Time Range Selector */
+.time-range-selector {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.range-btn {
+    padding: 8px 20px;
+    border: 2px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.range-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.range-btn.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+}
+
+/* Map Tooltip */
+.map-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.map-tooltip.show {
+    opacity: 1;
+}
+
+.tooltip-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.tooltip-value {
+    font-size: 11px;
+    color: #cbd5e1;
+}
+
+/* Animations */
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.pulsing {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
 }

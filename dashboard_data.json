@@ -1,0 +1,45 @@
+{
+  "totalEnrolments": 7890,
+  "totalUpdates": 0,
+  "biometricUpdates": 0,
+  "demographicUpdates": 0,
+  "genderCounts": {
+    "Male": 0,
+    "Female": 0,
+    "Other": 0
+  },
+  "ageCounts": {
+    "0-5": 1220,
+    "5-18": 2440,
+    "18-45": 4230,
+    "45-60": 0,
+    "60+": 0
+  },
+  "stateCounts": {
+    "Delhi": 870,
+    "Karnataka": 1630,
+    "Maharashtra": 2530,
+    "Tamil Nadu": 1090,
+    "Uttar Pradesh": 1770
+  },
+  "districtCounts": {
+    "Delhi": {
+      "New Delhi": 870
+    },
+    "Karnataka": {
+      "Bangalore": 1030,
+      "Mysore": 600
+    },
+    "Maharashtra": {
+      "Mumbai": 1400,
+      "Pune": 1130
+    },
+    "Tamil Nadu": {
+      "Chennai": 1090
+    },
+    "Uttar Pradesh": {
+      "Kanpur": 820,
+      "Lucknow": 950
+    }
+  }
+}

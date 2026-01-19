@@ -63,13 +63,13 @@ function handleFiles(files) {
 }
 
 function validateAndPrepare(file) {
-    const validTypes = ['text/csv', 'application/zip', 'application/x-zip-compressed', 'application/x-zip'];
+    const validTypes = ['text/csv', 'application/zip', 'application/x-zip-compressed', 'application/x-zip', 'application/pdf'];
 
     const fileExt = file.name.split('.').pop().toLowerCase();
-    const isValid = validTypes.includes(file.type) || fileExt === 'csv' || fileExt === 'zip';
+    const isValid = validTypes.includes(file.type) || fileExt === 'csv' || fileExt === 'zip' || fileExt === 'pdf';
 
     if (!isValid) {
-        alert('Please upload a CSV or ZIP file');
+        alert('Please upload a CSV, ZIP, or PDF file');
         return;
     }
 
@@ -135,11 +135,13 @@ function simulateProgress(file) {
             stepInsights.classList.remove('active');
             stepInsights.classList.add('completed');
 
-            // Check if file is ZIP or CSV
+            // Check if file is ZIP or CSV or PDF
             const fileExt = file.name.split('.').pop().toLowerCase();
 
             if (fileExt === 'zip') {
                 handleZipFile(file);
+            } else if (fileExt === 'pdf') {
+                handlePDFFile(file);
             } else {
                 handleCSVFile(file);
             }
@@ -203,6 +205,101 @@ async function handleZipFile(file) {
         alert("Failed to extract ZIP file. Please try again.");
         location.reload();
     }
+}
+
+async function handlePDFFile(file) {
+    try {
+        // Load PDF.js dynamically
+        if (typeof pdfjsLib === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+            document.head.appendChild(script);
+            await new Promise(resolve => script.onload = resolve);
+
+            // Set worker
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        let fullText = "";
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            const strings = content.items.map(item => item.str);
+            fullText += strings.join(" ") + "\n";
+        }
+
+        // Parse the text to extract tabular data
+        const parsedData = extractTableDataFromPDFText(fullText);
+
+        if (parsedData.length === 0) {
+            alert("Could not extract structured data from this PDF. Please try a CSV file.");
+            location.reload();
+            return;
+        }
+
+        try {
+            localStorage.setItem('processedData', JSON.stringify(parsedData));
+            localStorage.setItem('processedFile', file.name);
+            window.location.href = 'dashboard.html';
+        } catch (err) {
+            console.error("Storage failed: ", err);
+            alert("File too large. Using sample data.");
+            window.location.href = 'dashboard.html';
+        }
+
+    } catch (error) {
+        console.error("PDF processing failed:", error);
+        alert("Failed to process PDF. Please try a CSV file.");
+        location.reload();
+    }
+}
+
+function extractTableDataFromPDFText(text) {
+    // Basic heuristic to find state data rows
+    // Looks for lines that look like: "StateName Number Number ..."
+    const lines = text.split('\n');
+    const data = [];
+
+    // Common state names to look for (start of line)
+    const states = [
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
+        "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh",
+        "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+        "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+        "Uttarakhand", "West Bengal", "Andaman", "Chandigarh", "Dadra", "Daman", "Delhi",
+        "Jammu", "Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+    ];
+
+    lines.forEach(line => {
+        const trimmed = line.trim();
+        // Check if line starts with a state name
+        const stateMatch = states.find(s => trimmed.toLowerCase().startsWith(s.toLowerCase()));
+
+        if (stateMatch) {
+            // Try to extract numbers following the state name
+            // Remove the state name and commas
+            const remainder = trimmed.substring(stateMatch.length).replace(/,/g, '');
+            const numbers = remainder.match(/(\d+)/g);
+
+            if (numbers && numbers.length > 0) {
+                // Construct a data object
+                // We assume the first number is Total Enrolment, second is Updates, etc.
+                const row = {
+                    state: stateMatch,
+                    age_0_5: numbers[0] || 0,
+                    age_5_17: numbers[1] || 0,
+                    age_18_greater: numbers[2] || 0,
+                    total: numbers.reduce((a, b) => parseInt(a) + parseInt(b), 0)
+                };
+                data.push(row);
+            }
+        }
+    });
+
+    return data;
 }
 
 function handleCSVFile(file) {
